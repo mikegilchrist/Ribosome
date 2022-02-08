@@ -6,35 +6,44 @@ library(data.table)
 
 
 
-CreateParMatrix <- function(parameter.range,fixed = NA,fixed.val=1,par.names=NA,num.pars = 1){
-  if(typeof(parameter.range)!="list"){
-    stop("Parameter range provided is not a list.")
+CreateParMatrix <- function(parameters,imax,rescale = F ,rescale.val = "tau",
+                            par.names=c("kappa","mu","lambda","tau","delta","s2"),
+                            interference = T, which.interfere = c("kappa","tau")){
+  if(is.null(names(parameters))){
+    names(parameters) <- par.names
   }
-  if(length(parameter.range)==0){
-    stop("Paramter range provided is empty.")
-  }
-  
-  if(length(parameter.range)==1){
-    if(all(!is.na(par.names))){
-      num.pars <- length(par.names)
+  #load parameters
+  tau <- parameters["tau"]
+  tau <- c(0,rep(tau/(imax*9),imax))
+  kappa <- c(rep(parameters["kappa"],imax),0)
+  lambda <-  parameters["lambda"]
+  mu <- rep(parameters["mu"],imax+1)
+  #add interference
+  if(interference==T){
+    if(any(which.interfere=="kappa")){
+      kappa <- rep(parameters["kappa"],imax+1)*seq(1,0,-1/imax)
     }
-    if(all(!is.na(fixed))){
-       parameter.range <- c(parameter.range,rep(parameter.range,num.pars-1)) 
-       parameter.range[fixed] <- fixed.val
-     }else{
-       parameter.range <- c(parameter.range,rep(parameter.range,num.pars=1))      
-     }
-  }else if(length(parameter.range)!=length(par.names)){
-    stop("To specify different values for each parameter the number of items in the
-         list must be equal to the number of parameters in par.names.")
+    if(any(which.interfere=="tau")){
+      tau <- rep(parameters["tau"]/(imax*9),imax+1)*seq(0,imax,1)
+    }
+    if(any(which.interfere=="mu")){
+      mu <- parameters["mu"]*seq(1,0,-1/imax)
+    }
   }
-  
-  par.range <- parameter.range
-  par.mat <- expand.grid(par.range)
-  if(all(!is.na(par.names))){
-    colnames(par.mat) <- par.names  
+  if(rescale==T){
+    tau <- tau/parameters[rescale.val]
+    kappa <- kappa/parameters[rescale.val]
+    lambda <- lambda/parameters[rescale.val]
+    mu <- mu/parameters[rescale.val]
   }
-  return(par.mat)
+  print(tau)
+  print(kappa)
+  upper <- tau[-1]
+  lower <- kappa[-(imax+1)]
+  main <- -1*(kappa+tau+mu)
+  B <-  c(-lambda,rep(0,imax))
+  Inv <- Solve.tridiag(diam1 = lower,dia = main,diap1 = upper,B = B)
+  return(Inv)
 }
 
 
@@ -68,7 +77,7 @@ CalcUnmarkedClass <- function(parameters,imax,rescale = F ,rescale.val = "tau",
     lambda <- lambda/parameters[rescale.val]
     mu <- mu/parameters[rescale.val]
   }
-  
+
   upper <- tau[-1]
   lower <- kappa[-(imax+1)]
   main <- -1*(kappa+tau+mu)
@@ -77,7 +86,7 @@ CalcUnmarkedClass <- function(parameters,imax,rescale = F ,rescale.val = "tau",
   return(Inv)
 }
 
-CalcMarkedClass <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.val = "tau", 
+CalcMarkedClass <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.val = "tau",
                             par.names=c("kappa","mu","lambda","tau","delta","s2"),
                             interference = T, which.interfere = c("kappa","tau")){
 
@@ -86,11 +95,12 @@ CalcMarkedClass <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.v
   }
   if(is.null(unmarked)){
     unmarked <- CalcUnmarkedClass(parameters = parameters,imax = imax, rescale = rescale,
-                                  rescale.val = rescale.val, par.names = par.names, 
+                                  rescale.val = rescale.val, par.names = par.names,
                                   interference = interference, which.interfere = which.interfere)
   }
   #load parameters
-  tau <- c(parameters["tau"],imax)
+  tau <- parameters["tau"]
+  tau <- c(0,rep(tau/(imax*9),imax))
   kappa <- c(rep(parameters["kappa"],imax),0)
   lambda <-  parameters["lambda"]
   mu <- rep(parameters["mu"],imax+1)
@@ -101,7 +111,7 @@ CalcMarkedClass <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.v
       kappa <- rep(parameters["kappa"],imax+1)*seq(1,0,-1/imax)
     }
     if(any(which.interfere=="tau")){
-      tau <- rep(parameters["tau"],imax+1)*seq(0,imax,1)
+      tau <- rep(parameters["tau"]/(imax*9),imax+1)*seq(0,imax,1)
     }
     if(any(which.interfere=="mu")){
       mu <- parameters["mu"]*seq(1,0,-1/imax)
@@ -114,36 +124,36 @@ CalcMarkedClass <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.v
     mu <- mu/parameters[rescale.val]
     delta <- delta/parameters[rescale.val]
   }
-  
+
   n <- imax+1
   gamma.func = function(i) {
-    if(i == 0){ 
-        delta 
-      } else{
-        tau[i+1]
-      } 
+    if(i == 0){
+      delta
+    } else{
+      tau[i+1]
+    }
   }
   marked <- vapply(0:imax,FUN.VALUE = n,FUN = function(i){mu[i+1]*sum(unmarked[(i+1):(n)])/gamma.func(i)})
-  return(marked) 
+  return(marked)
 }
 
 
 Classes <- function(parameters,imax,unmarked=NULL, marked = NULL,
-                    rescale = F, rescale.val = "tau", 
+                    rescale = F, rescale.val = "tau",
                     par.names=c("kappa","mu","lambda","tau","delta","s2"),
                     interference = T, which.interfere = c("kappa","tau")){
   if(is.null(names(parameters))){
     names(parameters) <- par.names
   }
   if(is.null(unmarked)){
-    unmarked <- CalcUnmarkedClassNDT(parameters = parameters,imax = imax, rescale = rescale,
-                                     rescale.val = rescale.val, par.names = par.names, 
-                                     interference = interference, which.interfere = which.interfere)    
+    unmarked <- CalcUnmarkedClass(parameters = parameters,imax = imax, rescale = rescale,
+                                     rescale.val = rescale.val, par.names = par.names,
+                                     interference = interference, which.interfere = which.interfere)
   }
   if(is.null(marked)){
-    marked <- CalcMarkedClassNDT(parameters = parameters,imax = imax, unmarked = unmarked, rescale = rescale,
-                                 rescale.val = rescale.val, par.names = par.names, 
-                                 interference = interference, which.interfere = which.interfere)    
+    marked <- CalcMarkedClass(parameters = parameters,imax = imax, unmarked = unmarked, rescale = rescale,
+                                 rescale.val = rescale.val, par.names = par.names,
+                                 interference = interference, which.interfere = which.interfere)
   }
   Classes <- (marked + unmarked)
   return(Classes)
@@ -174,10 +184,10 @@ CHECK_STEADY_STATE <- function(unmarked, marked,parameters, imax=NA,post=F,verbo
       unmarked_check[i] <- (-mu[i]-kappa[i])*unmarked[i] + tau[i+1]*unmarked[i+1] + lambda[i]
       marked_check[i] <- (mu[i])*unmarked[i] + tau[i+1]*marked[i+1] - delta[i]*marked[i]
     }else if(i<(imax+1)){
-      unmarked_check[i] <- unmarked[i]*(-kappa[i]-tau[i]-mu[i]) + kappa[i-1]*unmarked[i-1]+tau[i+1]*unmarked[i+1]    
+      unmarked_check[i] <- unmarked[i]*(-kappa[i]-tau[i]-mu[i]) + kappa[i-1]*unmarked[i-1]+tau[i+1]*unmarked[i+1]
       marked_check[i] <- (mu[i])*unmarked[i] + tau[i+1]*marked[i+1] - tau[i]*marked[i]
     }else {
-      unmarked_check[i] <- unmarked[i]*(-tau[i]-mu[i]) + kappa[i-1]*unmarked[i-1]   
+      unmarked_check[i] <- unmarked[i]*(-tau[i]-mu[i]) + kappa[i-1]*unmarked[i-1]
       marked_check[i] <- (mu[i])*unmarked[i] - tau[i]*marked[i]
     }
     unmarked_check <- round(unmarked_check,tol)
@@ -220,7 +230,7 @@ CHECK_STEADY_STATE <- function(unmarked, marked,parameters, imax=NA,post=F,verbo
     }else{
       return(test)
     }
-    
+
   }
 }
 
@@ -241,7 +251,7 @@ plot.series <- function(data,series,par,main){
   leg.titles <- paste(c("k","m","l","t","d")[c(1,2,5)],"=")
   leg.text <- as.character(unlist(apply(t(apply(par[series,c(1,2,5)],1,function(i) paste(leg.titles,formatC(unlist(i), format = "e", digits = 0), sep=" "))),1,function(j) paste(j,collapse = ", ") )))
   legend("topright",legend = leg.text,pch = 20 ,col = 1:length(series))
-  
+
 }
 
 
@@ -260,7 +270,7 @@ plot.bar <- function(data,series,pars,main,beside=F){
   #   points(0:(nrow(data)-1),data[,series[i]],col=i,pch=20)
   #   lines(0:(nrow(data)-1),data[,series[i]],col=i,lty=i)
   # }
-  
+
 }
 
 
@@ -279,12 +289,12 @@ plot.bars <- function(unmarked,marked,series,pars,main,
     ymax <- round(ymax)
     bars.tmp <- barplot(height = rbind(unmarked[,series[1]],marked[,series[1]]),
                         ylim=c(1,ymax),col = c("grey80","grey40"),log="y",
-                        beside=beside,xpd =F)  
+                        beside=beside,xpd =F)
     #axis(2,at = seq(0,ymax,ymax/4),labels = c("",round(log(seq(0,ymax,ymax/4)[2:5],10),2)))
   }else{
     bars.tmp <- barplot(height = rbind(unmarked[,series[1]],marked[,series[1]]),
                         ylim=c(ymax*0.01,ymax),col = c("grey80","grey40"),
-                        beside=beside,xpd = F)      
+                        beside=beside,xpd = F)
   }
   if(xaxt.plot ==T){
     if(beside==F){
@@ -306,10 +316,10 @@ plot.bars <- function(unmarked,marked,series,pars,main,
   }
   if(any(is.na(set.params))){
     leg.titles <- paste(c("k","m","l","t","d")[c(1,2,5)],"=")
-    leg.text <- as.character(unlist(apply(t(apply(pars[series,c(1,2,5)],1,function(i) paste(leg.titles,formatC(unlist(i), format = "e", digits = 2), sep=" "))),1,function(j) paste(j,collapse = ", ") )))    
+    leg.text <- as.character(unlist(apply(t(apply(pars[series,c(1,2,5)],1,function(i) paste(leg.titles,formatC(unlist(i), format = "e", digits = 2), sep=" "))),1,function(j) paste(j,collapse = ", ") )))
   } else {
     leg.titles <- set.params
-    leg.text <- as.character(unlist(apply(t(apply(pars[series,..set.params],1,function(i) paste(leg.titles,formatC(unlist(i), format = "e", digits = 2), sep=" "))),1,function(j) paste(j,collapse = ", ") )))     
+    leg.text <- as.character(unlist(apply(t(apply(pars[series,..set.params],1,function(i) paste(leg.titles,formatC(unlist(i), format = "e", digits = 2), sep=" "))),1,function(j) paste(j,collapse = ", ") )))
   }
 
   if(main.plot == T ){
@@ -321,7 +331,7 @@ plot.bars <- function(unmarked,marked,series,pars,main,
   if(pars.leg == T){
     legend("topright",legend = leg.text,bg = rgb(1,1,1,0),box.col = rgb(1,1,1,0))
   }
-  box() 
+  box()
 }
 
 
@@ -330,21 +340,21 @@ plot.bars.mat <- function(unmarked,marked,series,pars,main,
                           log=F,legend.plot=T,pars.leg=F,beside=T,
                           xaxt.step=1,global.ymax=F,set.params=NA){
   if(global.ymax==T){
-    global.ymax <- max(unmarked[,series]+marked[,series])    
+    global.ymax <- max(unmarked[,series]+marked[,series])
   } else {
     global.ymax <- NA
   }
-  
+
   #par(mfrow=c(4,3))
   count <- 1
-  
+
   layout.matrix <- t(matrix(c(1:12,0,0,0), nrow = 3, ncol = 5))
-  
+
   layout(mat = layout.matrix,
          heights = c(2, 2, 2 ,2,1), # Heights of the two rows
          widths = c(2, 2, 2)) # Widths of the two columns
-  
-  
+
+
   for(i in series){
     par(mar=c(0,2,1,1))
     if(count<9){
@@ -373,7 +383,7 @@ series.mat.plot <- function(parameters,Unmarked,Marked,group.by ="kappa",set.par
   }else if(is.numeric(group.by)){
     groupsize <- group.by
   }
-  
+
   series.mat <- t(matrix(1:nrow(parameters),nrow=groupsize))
   for(i in 1:(nrow(parameters)/groupsize)){
     print(i)
@@ -386,7 +396,7 @@ series.mat.plot <- function(parameters,Unmarked,Marked,group.by ="kappa",set.par
                   pars=parameters,main="Sum classes. l=1, d=10^5",log=log,beside=beside,xaxt.step = xaxt.step,global.ymax = global.ymax,set.params=set.params)
     dev.off()
   }
-  
+
 }
 
 
@@ -399,7 +409,7 @@ s2_approx <- function(parameters,imax,mean){
   tau <- parameters["tau"]
   kappa <- parameters["kappa"]
   mu <- parameters["mu"]
-  approx <- 0.5*(kappa+(mean/imax)*(kappa-tau))/((kappa+tau)/imax-mu)  
+  approx <- 0.5*(kappa+(mean/imax)*(kappa-tau))/((kappa+tau)/imax-mu)
 }
 
 
@@ -449,16 +459,16 @@ CalcUnmarkedClass_newtau <- function(parameters,imax,rescale = F ,rescale.val = 
 
 
 
-CalcMarkedClass_newtau <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.val = "tau", 
+CalcMarkedClass_newtau <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.val = "tau",
                             par.names=c("kappa","mu","lambda","tau","delta","s2"),
                             interference = T, which.interfere = c("kappa","tau")){
-  
+
   if(is.null(names(parameters))){
     names(parameters) <- par.names
   }
   if(is.null(unmarked)){
     unmarked <- CalcUnmarkedClass(parameters = parameters,imax = imax, rescale = rescale,
-                                  rescale.val = rescale.val, par.names = par.names, 
+                                  rescale.val = rescale.val, par.names = par.names,
                                   interference = interference, which.interfere = which.interfere)
   }
   #load parameters
@@ -487,22 +497,22 @@ CalcMarkedClass_newtau <- function(parameters,imax,unmarked=NULL,rescale = F, re
     mu <- mu/parameters[rescale.val]
     delta <- delta/parameters[rescale.val]
   }
-  
+
   n <- imax+1
   gamma.func = function(i) {
-    if(i == 0){ 
-      delta 
+    if(i == 0){
+      delta
     } else{
       tau[i+1]
-    } 
+    }
   }
   marked <- vapply(0:imax,FUN.VALUE = n,FUN = function(i){mu[i+1]*sum(unmarked[(i+1):(n)])/gamma.func(i)})
-  return(marked) 
+  return(marked)
 }
 
 
 Classes_newtau <- function(parameters,imax,unmarked=NULL, marked = NULL,
-                    rescale = F, rescale.val = "tau", 
+                    rescale = F, rescale.val = "tau",
                     par.names=c("kappa","mu","lambda","tau","delta","s2"),
                     interference = T, which.interfere = c("kappa","tau")){
   if(is.null(names(parameters))){
@@ -510,13 +520,13 @@ Classes_newtau <- function(parameters,imax,unmarked=NULL, marked = NULL,
   }
   if(is.null(unmarked)){
     unmarked <- CalcUnmarkedClass_newtau(parameters = parameters,imax = imax, rescale = rescale,
-                                     rescale.val = rescale.val, par.names = par.names, 
-                                     interference = interference, which.interfere = which.interfere)    
+                                     rescale.val = rescale.val, par.names = par.names,
+                                     interference = interference, which.interfere = which.interfere)
   }
   if(is.null(marked)){
     marked <- CalcMarkedClass_newtau(parameters = parameters,imax = imax, unmarked = unmarked, rescale = rescale,
-                                 rescale.val = rescale.val, par.names = par.names, 
-                                 interference = interference, which.interfere = which.interfere)    
+                                 rescale.val = rescale.val, par.names = par.names,
+                                 interference = interference, which.interfere = which.interfere)
   }
   Classes <- (marked + unmarked)
   return(Classes)
