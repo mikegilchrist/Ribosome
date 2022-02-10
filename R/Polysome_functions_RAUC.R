@@ -4,11 +4,43 @@ library(data.table)
 
 # Model Solutions ---------------------------------------------------------
 
+CreateParMatrix <- function(parameter.range,fixed = NA,fixed.val=1,par.names=NA,num.pars = 1){
+  if(typeof(parameter.range)!="list"){
+    stop("Parameter range provided is not a list.")
+  }
+  if(length(parameter.range)==0){
+    stop("Paramter range provided is empty.")
+  }
+
+  if(length(parameter.range)==1){
+    if(all(!is.na(par.names))){
+      num.pars <- length(par.names)
+    }
+    if(all(!is.na(fixed))){
+      parameter.range <- c(parameter.range,rep(parameter.range,num.pars-1))
+      parameter.range[fixed] <- fixed.val
+    }else{
+      parameter.range <- c(parameter.range,rep(parameter.range,num.pars=1))
+    }
+  }else if(length(parameter.range)!=length(par.names)){
+    stop("To specify different values for each parameter the number of items in the
+         list must be equal to the number of parameters in par.names.")
+  }
+
+  par.range <- parameter.range
+  par.mat <- expand.grid(par.range)
+  if(all(!is.na(par.names))){
+    colnames(par.mat) <- par.names
+  }
+  return(par.mat)
+}
 
 
-CreateParMatrix <- function(parameters,imax,rescale = F ,rescale.val = "tau",
-                            par.names=c("kappa","mu","lambda","tau","delta","s2"),
-                            interference = T, which.interfere = c("kappa","tau")){
+
+#Nondimensionalized by tau
+CalcUnmarkedClass <- function(parameters,imax,rescale = F ,rescale.val = "tau",
+                              par.names=c("kappa","mu","lambda","tau","delta","s2"),
+                              interference = T, which.interfere = c("kappa","tau")){
   if(is.null(names(parameters))){
     names(parameters) <- par.names
   }
@@ -38,46 +70,6 @@ CreateParMatrix <- function(parameters,imax,rescale = F ,rescale.val = "tau",
   }
   print(tau)
   print(kappa)
-  upper <- tau[-1]
-  lower <- kappa[-(imax+1)]
-  main <- -1*(kappa+tau+mu)
-  B <-  c(-lambda,rep(0,imax))
-  Inv <- Solve.tridiag(diam1 = lower,dia = main,diap1 = upper,B = B)
-  return(Inv)
-}
-
-
-#Nondimensionalized by tau
-CalcUnmarkedClass <- function(parameters,imax,rescale = F ,rescale.val = "tau",
-                              par.names=c("kappa","mu","lambda","tau","delta","s2"),
-                              interference = T, which.interfere = c("kappa","tau")){
-  if(is.null(names(parameters))){
-    names(parameters) <- par.names
-  }
-  #load parameters
-  tau <- c(0,rep(parameters["tau"],imax))
-  kappa <- c(rep(parameters["kappa"],imax),0)
-  lambda <-  parameters["lambda"]
-  mu <- rep(parameters["mu"],imax+1)
-  #add interference
-  if(interference==T){
-    if(any(which.interfere=="kappa")){
-      kappa <- rep(parameters["kappa"],imax+1)*seq(1,0,-1/imax)
-    }
-    if(any(which.interfere=="tau")){
-      tau <- rep(parameters["tau"],imax+1)*seq(0,imax,1)
-    }
-    if(any(which.interfere=="mu")){
-      mu <- parameters["mu"]*seq(1,0,-1/imax)
-    }
-  }
-  if(rescale==T){
-    tau <- tau/parameters[rescale.val]
-    kappa <- kappa/parameters[rescale.val]
-    lambda <- lambda/parameters[rescale.val]
-    mu <- mu/parameters[rescale.val]
-  }
-
   upper <- tau[-1]
   lower <- kappa[-(imax+1)]
   main <- -1*(kappa+tau+mu)
