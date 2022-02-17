@@ -68,8 +68,8 @@ CalcUnmarkedClass <- function(parameters,imax,rescale = F ,rescale.val = "tau",
     lambda <- lambda/parameters[rescale.val]
     mu <- mu/parameters[rescale.val]
   }
-  print(tau)
-  print(kappa)
+#  print(tau)
+#  print(kappa)
   upper <- tau[-1]
   lower <- kappa[-(imax+1)]
   main <- -1*(kappa+tau+mu)
@@ -522,5 +522,55 @@ Classes_newtau <- function(parameters,imax,unmarked=NULL, marked = NULL,
   }
   Classes <- (marked + unmarked)
   return(Classes)
+}
+
+
+# Summary Statistics ------------------------------------------------------
+
+Ribo_percent <- function(Data){
+  if(is.null(dim(Data))&length(unlist(Data))>1){
+    tmp <- Data/sum(Data)
+  } else {
+    tmp <- apply(Data,2,function(i) i/sum(i))
+  }
+  return(tmp)
+}
+
+Ribo_mean <- function(Data){
+  if(is.null(dim(Data))&length(unlist(Data))>1){
+    mean.tmp <- unlist((Data/sum(Data))%*%c(0:(length(Data)-1)))
+  }else{
+    Data_pct <- apply(Data,2,function(i) i/sum(i))
+    mean.tmp <- unlist(t(Data_pct)%*%c(0:(nrow(Data)-1)))
+  }
+  return(mean.tmp)
+}
+
+
+Ribo_sd <- function(Data){
+  if(is.null(dim(Data))&length(unlist(Data))>1){
+    mean <- Ribo_mean(Data)
+    square.diff <- ((0:(length(Data)-1))-as.vector(mean.tmp))^2
+    data.pct <- Data/sum(Data)
+    var <- t(data.pct)%*%square.diff.tmp
+  }else{
+    Data_pct <- apply(Data,2,function(i) i/sum(i))
+    mean <- Ribo_mean(Data)
+    classes <- matrix((0:(nrow(Data)-1)),nrow = nrow(Data),ncol = ncol(Data))
+    square.diff <- lapply(1:ncol(classes),function(i) (classes[,i]-mean[i])^2)
+    var <- unlist(lapply(1:length(square.diff),function(i) Data_pct[,i]%*%square.diff[[i]]))
+  }
+  return(sqrt(var))
+}
+
+Ribo_mode <- function(Data){
+  if(is.null(dim(Data))&length(unlist(Data))>1){
+    pct.tmp <- Ribo_percent(Data)
+    mode <- which(pct.tmp==max(pct.tmp))
+  }else{
+    pct.tmp <- Ribo_percent(Data)
+    mode <- unlist(apply(pct.tmp,2,function(i) which(i==max(i))))
+  }
+  return(mode)
 }
 
