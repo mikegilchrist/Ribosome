@@ -1,5 +1,5 @@
 source("R/Polysome_functions_RAUC.R")
-
+library("viridis")
 
 # Focused parameters ------------------------------------------------------
 
@@ -132,83 +132,284 @@ Unmarked_imax30_plot1 <- apply(plot1.params,1,function(i) CalcUnmarkedClass(para
 U_pct_imax30_plot1 <- Ribo_percent(Unmarked_imax30_plot1)
 U_mean_imax30_plot1 <- Ribo_mean(Unmarked_imax30_plot1)
 U_sd_imax30_plot1 <- Ribo_sd(Unmarked_imax30_plot1)
-U_mode_imax30_plot1
+U_mode_imax30_plot1 <- Ribo_mode(Unmarked_imax30_plot1)
 
-#plot
+#plot curves for figure 1 example
+peaks_mean <- round(U_mean_imax30_plot1[plot1.params[tau==1,index]])
+peaks_mode <- U_mode_imax30_plot1[plot1.params[tau==1,index]]
+peaks_mean_index <- unlist(lapply(c(0,5,10,15,25,30), function(i) which(peaks_mean==i)[1]))
+peaks_mode_index <- unlist(lapply(c(0,5,10,15,25,30), function(i) which(peaks_mode==i)[1]))
+peaks_mean_index[1] <- 10
 
-plot(plot1.params[tau==0.1,kappa],U_sd_imax30_plot1[plot1.params[tau==0.1,index]],type="l",ylim=c(0,max(U_sd_imax30_plot1)))
-counter <- 2
-counter <- 2
-for(i in par.ranges[[4]][1:4]){
-  lines(plot1.params[tau==i,kappa],U_sd_imax30_plot1[plot1.params[tau==i,index]],lty=counter)
-  counter <- counter + 1
+png("../Results/20220218/Fig1_Ribosome_loading_no_int.png",width = 5,height = 5,units = "in",res=300)
+plot(0:30,Ribo_percent(Unmarked_imax30_plot1[,plot1.params[tau==1,index]][,peaks_mean_index[1]]),type="l",
+     ylab="Percent Ribosomal Load",xlab="Ribosomal Class",lwd=2,font=2,cex.lab=1.2,
+     main = bquote("No interference, imax=30, "*tau*"=1"*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+for(i in 2:length(peaks_mean_index)){
+  lines(0:30,Ribo_percent(Unmarked_imax30_plot1[,plot1.params[tau==1,index]][,peaks_mean_index[i]]),col=i,lwd=2)
 }
-counter <- 1
-for(i in par.ranges[[4]][5:8]){
-  lines(plot1.params[tau==i,kappa],U_sd_imax30_plot1[plot1.params[tau==i,index]],lty=counter,col="grey50")
-  counter <- counter + 1
-}
+dev.off()
 
-
-plot(plot1.params[tau==0.1,kappa],U_mean_imax30_plot1[plot1.params[tau==0.1,index]],type="l",ylim=c(0,max(U_mean_imax30_plot1)),
-     las=1,ylab="Mean Ribsome Load",xlab= bquote(kappa),
-     main=bquote("No interference, imax=30, "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
-counter <- 2
-for(i in par.ranges[[4]][1:4]){
-  lines(plot1.params[tau==i,kappa],U_mean_imax30_plot1[plot1.params[tau==i,index]],lty=counter)
-  counter <- counter + 1
-}
-counter <- 1
-for(i in par.ranges[[4]][5:8]){
-  lines(plot1.params[tau==i,kappa],U_mean_imax30_plot1[plot1.params[tau==i,index]],lty=counter,col="grey50")
-  counter <- counter + 1
-}
-
-
-# plot(plot1.params[tau==0.1,kappa][1:1112],U_mean_imax30_plot1[plot1.params[tau==0.1,index]][1:1112],type="l",ylim=c(0,max(U_mean_imax30_plot1)),
-#      las=1,ylab="Mean Ribsome Load",xlab= bquote(kappa),
-#      main=bquote("No interference, imax=30, "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
-# counter <- 2
-# for(i in par.ranges[[4]][1:4]){
-#   lines(plot1.params[tau==i,kappa][1:1112],U_mean_imax30_plot1[plot1.params[tau==i,index]][1:1112],lty=counter)
-#   counter <- counter + 1
-# }
-# counter <- 1
-# for(i in par.ranges[[4]][5:8]){
-#   lines(plot1.params[tau==i,kappa][1:1112],U_mean_imax30_plot1[plot1.params[tau==i,index]][1:1112],lty=counter,col="grey50")
-#   counter <- counter + 1
-# }
-
-abline(v=.1/9,col="red")
-points(plot1.params[3334,kappa],U_mean_imax30_plot1[plot1.params[tau==0.1,index]][3334],pch=20,col="red")
-points(plot1.params[324,kappa],U_mean_imax30_plot1[plot1.params[tau==0.1,index]][324],pch=20,col="red")
-points(plot1.params[112,kappa],U_mean_imax30_plot1[plot1.params[tau==0.1,index]][112],pch=20,col="red")
-
-which(U_mean_imax30_plot1<15.1&U_mean_imax30_plot1>14.9)
-
-
-
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_legend.png",width = 1.5,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+kappas <- c(round(plot1.params[tau==1,kappa][peaks_mean_index[1]],4),round(plot1.params[tau==1,kappa][peaks_mean_index[2:6]],3))
 plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
-#legend("left",legend = lapply(par.ranges[[4]],function(j) as.expression(substitute(tau == p,list("p"=as.name(j))))),lty = c(1:length(par.ranges[[4]])))
-legend("left", legend = as.expression(lapply(par.ranges[[4]], function(x) bquote(tau==.(x)))), lty = c(1:4,1:4),col=c(rep("black",4),rep("grey50",4)))
+legend("left", legend = as.expression(lapply(kappas, function(x) bquote(kappa==.(x)))),col=1:6,lty=1)
+dev.off()
 
-plot(0:30,U_pct_imax_plot1[,1],ylim=c(0,1))
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_bw.png",width = 5,height = 5,units = "in",res=300)
+plot(0:30,Ribo_percent(Unmarked_imax30_plot1[,plot1.params[tau==1,index]][,peaks_mean_index[1]]),type="l",ylab="Percent Ribosomal Load",xlab="Ribosomal Class",lwd=2,font=2,cex.lab=1.2,
+     main = bquote("No interference, imax=30, "*tau*"=1"*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+for(i in 2:length(peaks_mean_index)){
+  lines(0:30,Ribo_percent(Unmarked_imax30_plot1[,plot1.params[tau==1,index]][,peaks_mean_index[i]]),lty=i,lwd=2)
+}
+dev.off()
 
-points(0:30,U_pct_imax_plot1[,2])
-points(0:30,U_pct_imax_plot1[,11])
-
-points(0:30,U_pct_imax_plot1[,31])
-
-points(0:30,U_pct_imax_plot1[,51])
-points(0:30,U_pct_imax_plot1[,21])
-points(0:30,U_pct_imax_plot1[,41])
-png("../Results/20220216/No_int_example.png",width = 4,height = 4,res = 300,units = "in")
-
-
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_legend_bw.png",width = 1.5,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+kappas <- c(round(plot1.params[tau==1,kappa][peaks_mean_index[1]],4),round(plot1.params[tau==1,kappa][peaks_mean_index[2:6]],3))
+plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
+legend("left", legend = as.expression(lapply(kappas, function(x) bquote(kappa==.(x)))),col=1,lty=1:6)
 dev.off()
 
 
 
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_legend.png",width = 1.5,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+kappas <- c(round(plot1.params[tau==1,kappa][peaks_mean_index[1]],4),round(plot1.params[tau==1,kappa][peaks_mean_index[2:6]],3))
+plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
+legend("left", legend = as.expression(lapply(kappas, function(x) bquote(kappa==.(x)))),col=1:6,lty=1)
+dev.off()
+
+
+bp.data <- Ribo_percent(Unmarked_imax30_plot1[,plot1.params[tau==1,index]][,peaks_mean_index])
+bp.data.trim <- bp.data
+bp.data.trim[which(bp.data.trim>0.3)] <- bp.data.trim[which(bp.data.trim>0.3)] -0.2
+#bp.data.trim[1,1] <- bp.data.trim[1,1]-0.15
+
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_bp_cut.png",width = 5,height = 5,units = "in",res=300)
+bp.tmp <-barplot(t(bp.data.trim),beside = T,col=c("black","grey80","grey40","grey60","grey20","white"),ylim=c(0,0.65),width = 2,axes=F,main=bquote("No interference, imax=30, "*tau*"=1"*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+mtext(side = 1,at = colMeans(bp.tmp)[seq(1,31,2)],text = seq(0,30,2))
+mtext(side = 1,at = colMeans(bp.tmp)[seq(2,31,2)],text = seq(1,30,2),line=1)
+mtext(side = 1,at=mean(colMeans(bp.tmp)),text = "Ribosomal class",line=2)
+mtext(side = 2,at=0.3,text = "Percent Ribosomal Load",line=2.5)
+axis(2,at = c(seq(0,0.3,0.1),0.4,0.5,0.6),labels = c(0,0.1,0.2,0.3,0.6,0.7,0.8),las=2)
+par(xpd=T)
+polygon(x=c(-20,max(bp.tmp)+10,max(bp.tmp)+10,-20,-20),y=c(0.3,0.3,0.395,0.395,0.3),col = "white",border = rgb(0,0,0,0))
+lines(x = c(-20,-10),y=-0.001*(c(-20,-10)+20)+0.402,lwd=2)
+lines(x = c(-20,-10),y=-0.001*(c(-20,-10)+20)+0.302,lwd=2)
+box()
+dev.off()
+
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_legend_bp.png",width = 1.5,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+kappas <- c(round(plot1.params[tau==1,kappa][peaks_mean_index[1]],4),round(plot1.params[tau==1,kappa][peaks_mean_index[2:6]],3))
+plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
+legend("left", legend = as.expression(lapply(kappas, function(x) bquote(kappa==.(x)))),fill=c("black","grey80","grey40","grey60","grey20","white"))
+dev.off()
+
+png("../Results/20220218/Fig1_Ribosome_loading_no_int_bp_no_cut.png",width = 5,height = 5,units = "in",res=300)
+bp.data <- Ribo_percent(Unmarked_imax30_plot1[,plot1.params[tau==1,index]][,peaks_mean_index])
+bp.tmp <-barplot(t(bp.data),beside = T,col=c("black","grey80","grey40","grey60","grey20","white"),ylim=c(0,0.8),width = 2,main=bquote("No interference, imax=30, "*tau*"=1"*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+mtext(side = 1,at = colMeans(bp.tmp)[seq(1,31,2)],text = seq(0,30,2))
+mtext(side = 1,at = colMeans(bp.tmp)[seq(2,31,2)],text = seq(1,30,2),line=1)
+mtext(side = 1,at=mean(colMeans(bp.tmp)),text = "Ribosomal class",line=2)
+mtext(side = 2,at=0.3,text = "Percent Ribosomal Load",line=2.5)
+box()
+dev.off()
+
+#SD plot
+png("../Results/20220218/Fig1_SD_tau_range.png",width = 5,height = 5,units = "in",res=300)
+plot(plot1.params[tau==0.1,kappa],U_sd_imax30_plot1[plot1.params[tau==0.1,index]],type="l",ylim=c(0,max(U_sd_imax30_plot1)),
+     xlab=bquote(kappa),ylab="Ribsomal class sd",main=bquote("No interference, imax=30, "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5),lwd=2,cex.lab=1.2,font=2)
+counter <- 2
+counter <- 2
+for(i in par.ranges[[4]][1:4]){
+  lines(plot1.params[tau==i,kappa],U_sd_imax30_plot1[plot1.params[tau==i,index]],lty=counter,lwd=2)
+  counter <- counter + 1
+}
+counter <- 1
+for(i in par.ranges[[4]][5:8]){
+  lines(plot1.params[tau==i,kappa],U_sd_imax30_plot1[plot1.params[tau==i,index]],lty=counter,col="grey50",lwd=2)
+  counter <- counter + 1
+}
+dev.off()
+#Mean plot
+png("../Results/20220218/Fig1_mean_tau_range.png",width = 5,height = 5,units = "in",res=300)
+plot(plot1.params[tau==0.1,kappa],U_mean_imax30_plot1[plot1.params[tau==0.1,index]],type="l",ylim=c(0,max(U_mean_imax30_plot1)),
+     las=1,ylab="Mean Ribsome Load",xlab= bquote(kappa),lwd=2,cex.lab=1.2,font=2,
+     main=bquote("No interference, imax=30, "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in par.ranges[[4]][1:4]){
+  lines(plot1.params[tau==i,kappa],U_mean_imax30_plot1[plot1.params[tau==i,index]],lty=counter,lwd=2)
+  counter <- counter + 1
+}
+counter <- 1
+for(i in par.ranges[[4]][5:8]){
+  lines(plot1.params[tau==i,kappa],U_mean_imax30_plot1[plot1.params[tau==i,index]],lty=counter,col="grey50",lwd=2)
+  counter <- counter + 1
+}
+dev.off()
+
+
+plot(plot1.params[tau==0.1,kappa]/plot1.params[tau==0.1,tau],U_mean_imax30_plot1[plot1.params[tau==0.1,index]],type="l",ylim=c(0,max(U_mean_imax30_plot1)),
+     las=1,ylab="Mean Ribsome Load",xlab= bquote(kappa),lwd=2,cex.lab=1.2,font=2,
+     main=bquote("No interference, imax=30, "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in par.ranges[[4]][1:4]){
+  lines(plot1.params[tau==i,kappa]/plot1.params[tau==i,tau],U_mean_imax30_plot1[plot1.params[tau==i,index]],lty=counter,lwd=2,col=counter)
+  counter <- counter + 1
+}
+counter <- 1
+for(i in par.ranges[[4]][5:8]){
+  lines(plot1.params[tau==i,kappa]/plot1.params[tau==i,tau],U_mean_imax30_plot1[plot1.params[tau==i,index]],lty=counter,lwd=2,col=counter)
+  counter <- counter + 1
+}
+
+#Mean and SD legend
+png("../Results/20220218/Fig1_Ribosome_mean_sd_legend.png",width = 1.5,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
+legend("left", legend = as.expression(lapply(par.ranges[[4]], function(x) bquote(tau==.(x)))), lty = c(1:4,1:4),col=c(rep("black",4),rep("grey50",4)))
+dev.off()
+#--------------------------------------------------------
+#imax range plot, compare to tau=1 range of params with imax 30
+plot1.params.imaxrange <- plot1.params[tau==1,-c(7)]
+#imax will be 6, 10 ,24, 40, 60, 112, 181 The 1%, 5%, 25%, 50%, 75%, 95%, and 99% quantiles of arabidopsis
+imax.range <- c(6,10,24,30,40,60,112,181)
+imax.percentiles <- c("1%","5%","25%","34%","50%","75%","95%","99%")
+Unmarked_imax_range_plot1 <- lapply(imax.range,function(j) apply(plot1.params.imaxrange,1,function(i) CalcUnmarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau"))))
+names(Unmarked_imax_range_plot1) <- imax.percentiles
+
+#Calculate summary statistics
+U_pct_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_percent)
+U_mean_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_mean)
+U_sd_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_sd)
+
+#profile plots imax range
+peak_positions <- c(0.05,0.25,0.5,0.75,0.95)
+
+peaks_mean_imax_range <- lapply(1:length(imax.range),function(i) round(U_mean_imax_range_plot1[[i]]/imax.range[i],2))
+peaks_mean_index_imax_range <- lapply(1:length(imax.range), function(i) unlist(lapply(peak_positions,function(j) which(peaks_mean_imax_range[[i]]==j)[1])))
+
+#plot curves for figure 1 imax range example
+
+
+
+png("../Results/20220224/Fig1_Ribosome_loading_no_int_imax_range_halfway_loading.png",width = 5,height = 5,units = "in",res=300)
+ plot((0:imax.range[4])/imax.range[4],Ribo_percent(Unmarked_imax_range_plot1[[4]][,peaks_mean_index_imax_range[[4]][3]]),type="l",
+     ylab="Percent Ribosomal Load",xlab="Ribosomal Class",lwd=2,font=2,cex.lab=1.2,ylim=c(0,0.3),
+     main = bquote("No interference, imax=30, "*tau*"=1"*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in c(1:3,5:8)){
+  lines((0:imax.range[i])/imax.range[i],Ribo_percent(Unmarked_imax_range_plot1[[i]][,peaks_mean_index_imax_range[[i]][3]]),col=counter,lwd=2)
+  counter <- counter+1
+}
+abline(v=peak_positions[3],col="grey50",lty=2)
+dev.off()
+
+png("../Results/20220224/Fig1_Ribosome_loading_no_int_legend_imax_range.png",width = 1.75,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
+legend("left", legend = paste("imax",imax.range,sep=" = "),col=c(2:4,1,5:8),lty=1)
+dev.off()
+
+
+
+png("../Results/20220224/Fig1_Ribosome_loading_no_int_imax_range_kappa=0.05.png",width = 5,height = 5,units = "in",res=300)
+plot((0:imax.range[4]),Ribo_percent(Unmarked_imax_range_plot1[[4]][,501]),type="l",
+     ylab="Percent Ribosomal Load",xlab="Ribosomal Class",lwd=2,font=2,cex.lab=1.2,ylim=c(0,0.3),xlim=c(0,105),
+     main = bquote("No interference, imax=30, "*kappa*"="*.(round(plot1.params.imaxrange[501,kappa],2))*", "*tau*"=1"*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5),cex.main=0.95)
+counter <- 2
+for(i in c(1:3,5:8)){
+  lines((0:imax.range[i]),Ribo_percent(Unmarked_imax_range_plot1[[i]][,501]),col=counter,lwd=2)
+  counter <- counter+1
+}
+dev.off()
+
+
+
+#SD plot imax range
+png("../Results/20220218/Fig1_SD_imax_range.png",width = 5,height = 5,units = "in",res=300)
+plot(plot1.params.imaxrange[,kappa],U_sd_imax30_plot1[plot1.params[tau==0.1,index]],type="l",ylim=c(0,max(U_sd_imax30_plot1)),
+     xlab=bquote(kappa),ylab="Ribsomal class sd",main=bquote("No interference, imax=30, "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5),lwd=2,cex.lab=1.2,font=2)
+counter <- 2
+counter <- 2
+for(i in par.ranges[[4]][1:4]){
+  lines(plot1.params[tau==i,kappa],U_sd_imax30_plot1[plot1.params[tau==i,index]],lty=counter,lwd=2)
+  counter <- counter + 1
+}
+counter <- 1
+for(i in par.ranges[[4]][5:8]){
+  lines(plot1.params[tau==i,kappa],U_sd_imax30_plot1[plot1.params[tau==i,index]],lty=counter,col="grey50",lwd=2)
+  counter <- counter + 1
+}
+dev.off()
+
+#Mean plot
+png("../Results/20220218/Fig1_mean_imax_range_tau=1.png",width = 5,height = 5,units = "in",res=300)
+plot(plot1.params.imaxrange[1:2500,kappa],(U_mean_imax_range_plot1[[4]][1:2500]/imax.range[4])*100,type="l",ylim=c(0,100),
+     las=1,ylab="Mean Ribsome Load Percent",xlab= bquote(kappa),lwd=2,cex.lab=1.2,font=2,
+     main=bquote("No interference, imax range, "*tau*"="*1*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in c(1:3)){
+  lines(plot1.params.imaxrange[1:2500,kappa],(U_mean_imax_range_plot1[[i]][1:2500]/imax.range[i])*100,lty=counter,lwd=2)
+  counter <- counter + 1
+}
+counter <- 1
+for(i in 5:8){
+  lines(plot1.params.imaxrange[1:2500,kappa],(U_mean_imax_range_plot1[[i]][1:2500]/imax.range[i])*100,col="grey50",lty=counter,lwd=2)
+  counter <- counter + 1
+}
+dev.off()
+
+png("../Results/20220224/Fig1_mean_imax_range_tau=1.png",width = 5,height = 5,units = "in",res=300)
+plot(plot1.params.imaxrange[1:2500,kappa],(U_mean_imax_range_plot1[[4]][1:2500]/imax.range[4])*100,type="l",ylim=c(0,100),
+     las=1,ylab="Mean Ribsome Load Percent",xlab= bquote(kappa),lwd=2,cex.lab=1.2,font=2,
+     main=bquote("No interference, imax range, "*tau*"="*1*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in c(1:3,5:8)){
+  lines(plot1.params.imaxrange[1:2500,kappa],(U_mean_imax_range_plot1[[i]][1:2500]/imax.range[i])*100,col=counter,lwd=2)
+  counter <- counter + 1
+}
+dev.off()
+
+
+plot(log(plot1.params.imaxrange[500:2500,kappa],10),(U_mean_imax_range_plot1[[4]][500:2500]/imax.range[4])*100,type="l",ylim=c(0,100),
+     las=1,ylab="Mean Ribsome Load Percent",xlab= bquote(kappa),lwd=2,cex.lab=1.2,font=2,
+     main=bquote("No interference, imax range, "*tau*"="*1*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in c(1:3,5:8)){
+  lines(log(plot1.params.imaxrange[500:2500,kappa],10),(U_mean_imax_range_plot1[[i]][500:2500]/imax.range[i])*100,col=counter,lwd=2)
+  counter <- counter + 1
+}
+
+png("../Results/20220224/Fig1_Ribosome_loading_no_int_imax_range_means.png.png",width = 5,height = 5,units = "in",res=300)
+plot(plot1.params.imaxrange[,kappa],U_mean_imax_range_plot1[[4]],type="l",ylim=c(0,181),
+     las=1,ylab="Mean Ribsome Load Percent",xlab= bquote(kappa),lwd=2,cex.lab=1.2,font=2,
+     main=bquote("No interference, imax range, "*tau*"="*1*", "*lambda*"="*1*", "*mu*"="*0*", "*delta*"="*10^5))
+counter <- 2
+for(i in c(1:3,5:8)){
+  lines(plot1.params.imaxrange[,kappa],U_mean_imax_range_plot1[[i]],col=counter,lwd=2)
+  counter <- counter + 1
+}
+dev.off()
+
+#Mean and SD legend
+png("../Results/20220218/Fig1_Ribosome_mean_sd_legend.png",width = 1.5,height = 2,units = "in",res=300)
+par(mar=c(0.1,0.1,0.1,0.1))
+plot(x=0,y=0,ylim=c(0,1),xlim=c(0,1),axes=F,ylab="",xlab="",col=rgb(0,0,0,0))
+legend("left", legend = as.expression(lapply(par.ranges[[4]], function(x) bquote(tau==.(x)))), lty = c(1:4,1:4),col=c(rep("black",4),rep("grey50",4)))
+dev.off()
+
+
+
+
+
+
+
+# Figure 2 ----------------------------------------------------------------
+#
 
 
 

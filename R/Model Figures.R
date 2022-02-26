@@ -626,6 +626,7 @@ imax_range <- c(2:50,100,150,200,250,300)
 # focused examples --------------------------------------------------------
 library(Biostrings)
 At <- Biostrings::readDNAStringSet("../../../Results/20220117/CDS_arabidopsis.txt")
+At <- Biostrings::readDNAStringSet("../../Project_1/Results/20220117/CDS_arabidopsis.txt")
 hist(width(At)/3)
 At_lengths <- sort(width(At))
 quantile(At_lengths,c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))/27

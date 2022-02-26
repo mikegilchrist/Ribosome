@@ -571,6 +571,6 @@ Ribo_mode <- function(Data){
     pct.tmp <- Ribo_percent(Data)
     mode <- unlist(apply(pct.tmp,2,function(i) which(i==max(i))))
   }
-  return(mode)
+  return(mode-1)
 }
 
