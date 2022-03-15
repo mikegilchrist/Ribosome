@@ -1,4 +1,5 @@
 source("R/Polysome_functions_RAUC.R")
+library(Biostrings)
 library("viridis")
 
 # Focused parameters ------------------------------------------------------
@@ -116,6 +117,197 @@ tmp.par <- CreateParMatrix(parameter.range = list(c(seq(0.0001,0.1,0.0001)),0.01
 # Manuscript figures ------------------------------------------------------
 
 # Figure 1 ----------------------------------------------------------------
+#histogram of Protein lengths in arabidopsis.
+#BiocManager::install("GenomicFeatures")
+#library(GenomicFeatures)
+At <- Biostrings::readDNAStringSet("../../Project_1/Results/20220117/CDS_arabidopsis.txt")
+hist(width(At)/3)
+At_lengths <- sort(width(At))
+quantile(At_lengths,c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))/3
+hist(At_lengths[which(At_lengths<3040)]/3,breaks = seq(1,1030,10),axes=F,xlab="Protein length (aa)")
+axes(1,at=c())
+boxplot(log(At_lengths/3,10))
+
+which(width(At)<300)
+which(width(At)>300&width(At)<402)
+At[which(width(At)==9)]
+
+allnames <- unlist(lapply(names(At[which(width(At)>300&width(At)<402)]),function(i) base::strsplit(x = i,split = "\\|")[[1]][2]))
+
+names(At_lengths) <- allnames
+
+allAGI <- unlist(lapply(names(At),function(i) base::strsplit(x = i,split = "\\|")[[1]][1]))
+allreps <- unlist(lapply(names(At),function(i) base::strsplit(x = i,split = "\\|")[[1]][2]))
+#write.table(sort(unique(allAGI)),"../Results/20220301/20220301_All_At_AGI.txt",quote=F,col.names = F,row.names = F,sep="\t")
+rep.models <- fread("../Results/20220301/At_Representative_Gene_models.txt",sep="\t",header = T,quote="",stringsAsFactors = F)
+setkeyv(rep.models,"Locus Identifier")
+
+GTF <- rtracklayer::import.gff("D:/Research/Araport11_GFF3_genes_transposons.201606.gtf")
+At.Tx.Db <- makeTxDbFromGRanges(GTF)
+seqlevels(At.Tx.Db)
+columns(At.Tx.Db)
+keytypes(At.Tx.Db)
+keys(At.Tx.Db,"TXNAME")
+CDS <- as.data.table(select(x = At.Tx.Db,keys=sort(unlist(rep.models[,`Gene Model Name`])),columns = c("CDSSTART","CDSEND"),keytype = "TXNAME"))
+CDS[,"CDS_LENGTH":= (CDSEND-CDSSTART)+1]
+CDS_LENGTHS <- CDS[,sum(CDS_LENGTH),TXNAME]
+setkeyv(CDS_LENGTHS,"TXNAME")
+cbind(CDS_LENGTHS[which((CDS_LENGTHS[,2]%%3)!=0),],CDS_LENGTHS[which((CDS_LENGTHS[,2]%%3)!=0),2]%%3)
+rep.models[as.character(gsub(x=unlist(CDS_LENGTHS[which((CDS_LENGTHS[,2]%%3)!=0),1]),replacement = "",pattern = "\\.\\d")),c(2,5)]
+CDS_LENGTHS[which((CDS_LENGTHS[,2]%%3)!=0),V1:=V1-CDS_LENGTHS[which((CDS_LENGTHS[,2]%%3)!=0),2]%%3]
+
+
+hist(CDS_LENGTHS[,V1]/3)
+quantile(CDS_LENGTHS[,V1],c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)/27
+quantile(CDS_LENGTHS[,V1],c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)/3
+hist(At_lengths[which(At_lengths<3000)]/3,breaks = seq(1,1010,10))
+
+sort(CDS_LENGTHS[,V1])[1:100]
+CDS_LENGTHS[order(CDS_LENGTHS[,V1]),][1:100]
+rep.models[as.character(gsub(x=unlist(CDS_LENGTHS[order(CDS_LENGTHS[,V1]),1][1:100]),replacement = "",pattern = "\\.\\d")),c(1,3)]
+rep.models["AT1G24660"]
+desc <- rep.models[as.character(gsub(x=unlist(CDS_LENGTHS[,1]),replacement = "",pattern = "\\.\\d")),c(1,3)]
+
+hypothetical <- as.numeric(unlist(lapply(desc[,2],function(i)grep(x = i,pattern = "^hypothetical protein"))))
+plot(unlist(hypothetical)/length(hypothetical))
+hist(unlist(hypothetical),breaks = seq(0,28000,500))
+
+
+hist(unlist(CDS_LENGTHS[,2]/3),col="red",breaks = seq(0,18000/3,100))
+hist(unlist(CDS_LENGTHS[unlist(hypothetical),2]/3),breaks = seq(0,18000/3,100),add=T,col="white")
+hist(unlist(CDS_LENGTHS[-unlist(hypothetical),2])/3,breaks = seq(0,18000,100)/3)
+quantile(sort(unlist(CDS_LENGTHS[-unlist(hypothetical),2])),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)/3
+quantile(sort(unlist(CDS_LENGTHS[,2])),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)/3
+
+
+#transmembrane
+desc <- desc[-unlist(hypothetical),]
+transmembrane <- as.numeric(unlist(lapply(desc[,2],function(i)grep(x = i,pattern = "^transmembrane"))))
+
+hist(unlist(CDS_LENGTHS[-hypothetical,2]/3),col="red",breaks = seq(0,18000/3,100))
+hist(unlist(CDS_LENGTHS[-hypothetical,][unlist(transmembrane),2]/3),breaks = seq(0,18000/3,100),add=T,col="white")
+hist(unlist(CDS_LENGTHS[-unlist(hypothetical),2])/3,breaks = seq(0,18000,100)/3)
+quantile(sort(unlist(CDS_LENGTHS[-unlist(hypothetical),][-unlist(transmembrane),2]/3)),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)
+quantile(sort(unlist(CDS_LENGTHS[,2])),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)/3
+
+#This gene encodes a small protein and has
+desc <- desc[-unlist(transmembrane),]
+evo <- as.numeric(unlist(lapply(desc[,2],function(i)grep(x = i,pattern = "^This gene encodes a small protein and has"))))
+
+hist(unlist(CDS_LENGTHS[-hypothetical,][-transmembrane,2]/3),col="red",breaks = seq(0,18000/3,100))
+hist(unlist(CDS_LENGTHS[-hypothetical,][-transmembrane,][evo,2]/3),breaks = seq(0,18000/3,100),add=T,col="white")
+hist(unlist(CDS_LENGTHS[-unlist(hypothetical),2])/3,breaks = seq(0,18000,100)/3)
+quantile(sort(unlist(CDS_LENGTHS[-unlist(hypothetical),][-transmembrane,][-evo,2]/3)),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)
+protein_quant <- quantile(sort(unlist(CDS_LENGTHS[,2])),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99),na.rm=T)/3
+hist(log(unlist(CDS_LENGTHS[-hypothetical,][-transmembrane,][-evo,2]/3),10),breaks = seq(0,log(18000/3,2),1/10),col="white")
+
+
+comp_and_exp_w_annotation <- CDS_LENGTHS[-hypothetical,][-transmembrane,][-evo,]
+
+hist(unlist(comp_and_exp_w_annotation[,2])/3,breaks = seq(0,18000/3,100),col="white")
+comp_trimmed <- CDS_LENGTHS[-hypothetical,][-transmembrane,][-evo,]
+comp_trimmed[V1>4500,2] <- 4500
+
+
+# Protein length distribution ---------------------------------------------
+
+png("../Results/20220301/Figure1_At_Protein_length_histogram.png",width = 5,height = 5,units = "in",res = 300)
+prot.length.hist <- hist(unlist(comp_trimmed[,2])/3,breaks = seq(0,1500,20),ylim=c(0,1100),col="white",axes=F,xlab="",main="Arabidopsis Protein Lengths")
+abline(v=quantile(comp_trimmed[,2]/3,c(0.1,0.5,0.9),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+axis(2,at=seq(0,10^max(nchar(prot.length.hist$counts)),250),labels = seq(0,10^max(nchar(prot.length.hist$counts)),250))
+axis(1,at=seq(0,1500,500),labels = c("0","500","1000",">1500"))
+mtext(1,line=2.25,text = "Protein Length (a.a.)")
+legend("topright",legend = c("Small","10% (140aa)","Medium","50% (368aa)","Large","90% (780aa)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,)
+box()
+dev.off()
+
+
+# Half Life Distribution --------------------------------------------------
+HL_At <- fread("../../Project_1/Results/20220117/Half life Sorenson.csv",stringsAsFactors = F,header=T)
+hist(log(unlist(HL_At[which(unlist(HL_At[,3])<100000),3]),10))
+median(unlist(HL_At[,3]),na.rm=T)
+quantile(unlist(HL_At[which(unlist(HL_At[,3])<100000),3]),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
+quantile(unlist(HL_At[,3]),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
+
+hist(unlist(HL_At[,3]))
+
+HL_At <- fread("../Results/20220301/Sorenson_results_WT.csv",stringsAsFactors = F,header=T)
+
+Sorenson_model <- function(time,alpha,beta){
+  tmp.res <- numeric(length(time))
+  if(beta!=0){
+    for(i in 1:length(tmp.res)){
+      tmp.res[i] <- exp(-1*(alpha/beta)*(1-exp(-1*beta*time[i])))
+    }
+  }else{
+    for(i in 1:length(tmp.res)){
+      tmp.res[i] <- exp(-1*(alpha*time[i]))
+    }
+  }
+
+  return(tmp.res)
+}
+time = c(seq(0,10,0.1),seq(11,5000,1))
+Sorenson_model(time,alpha = as.numeric(HL_At[1,2]),beta = as.numeric(HL_At[1,3]))[3000]
+
+Sorenson_model_results <- apply(as.data.frame(HL_At),1,function(i) Sorenson_model(time = c(seq(0,10,0.1),seq(11,5000,1)),alpha = as.numeric(i[2]),beta = as.numeric(i[3])))
+dim(Sorenson_model_results)
+
+Sorenson_model_results[,1]
+
+HL_CALC <- apply(Sorenson_model_results,2,function(i) which(i<0.5))
+HL_index <- lapply(HL_CALC,function(i) which(length(i)==0))
+length(which(HL_index==1))
+halves <- Sorenson_model_results[,-which(HL_index==1)]
+halves_index <- lapply(HL_CALC,function(i) i[1])
+
+for(i in 1:10){#ncol(Sorenson_model_results)){
+  if(is.na(halves_index[[i]])){
+    next
+  }
+  print(i)
+  print(Sorenson_model_results[(halves_index[[i]]-3):((halves_index[[i]]+3)),i])
+  print(time[(i-1):i])
+}
+
+counter=1
+times.tmp <- numeric(length = (ncol(Sorenson_model_results)-length(which(is.na(halves_index)))))
+names.tmp <- character(length = (ncol(Sorenson_model_results)-length(which(is.na(halves_index)))))
+
+for(i in 1:ncol(Sorenson_model_results)){
+#  print(i)
+#  print(counter)
+  if(is.na(halves_index[[i]])){
+#    print("next")
+    next
+  }
+  times.tmp[counter] <- time[i]
+  names.tmp[counter] <- HL_At[i,1]
+  counter = counter + 1
+}
+names(times.tmp) <- names.tmp
+
+hist(times.tmp)
+median(times.tmp,na.rm = T)
+mean(times.tmp,na.rm = T)
+max(times.tmp,na.rm = T)
+
+HL_minutes <- unlist(log(2)/HL_At[-which(HL_At[,2]==0),2])
+
+HL_minutes[(which(HL_minutes>10000))]<-10000
+
+png("../Results/20220301/Figure1_At_Protein_length_histogram.png",width = 5,height = 5,units = "in",res = 300)
+half.life.hist <- hist(HL_minutes,col="white",breaks = seq(0,10000,100),ylim=c(0,10),axes=F,xlab="",main="Arabidopsis Protein Lengths")
+abline(v=quantile(comp_trimmed[,2]/3,c(0.1,0.5,0.9),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+axis(2,at=seq(0,10^max(nchar(prot.length.hist$counts)),250),labels = seq(0,10^max(nchar(prot.length.hist$counts)),250))
+axis(1,at=seq(0,1500,500),labels = c("0","500","1000",">1500"))
+mtext(1,line=2.25,text = "Protein Length (a.a.)")
+legend("topright",legend = c("Small","10% (140aa)","Medium","50% (368aa)","Large","90% (780aa)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,)
+box()
+dev.off()
+
+
+
 
 #Define parameter set. Since determinant method is being used I chose a very small mu. Prior exploration showed that a
 #small mu behaves much like mu=0. The reason I am doing this is that calculating the adjugate matrix is slower than finding
