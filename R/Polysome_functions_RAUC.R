@@ -574,3 +574,27 @@ Ribo_mode <- function(Data){
   return(mode-1)
 }
 
+
+
+# Utilities ---------------------------------------------------------------
+
+Check_dir <- function(dir,new.dir=NA,add=F){
+  if(is.na(new.dir)){
+    new.dir=Sys.Date()
+    new.dir <- gsub(new.dir,pattern = "-",replacement = "")
+  }
+  tmp.dir <- list.files(dir)
+  if(any(tmp.dir==as.character(new.dir))){
+    return("Directory already exists")
+  }else if(add==T) {
+    dir.create(paste(dir,as.character(new.dir),sep="/"))
+    return(paste("Directory ",dir,as.character(new.dir)," created",sep=""))
+  } else{
+    return(cat(paste("Directory ",dir,as.character(new.dir)," does not exist."
+                     ,sep=""),"Run Check_dir with new.dir=T to create this directory.",sep="\n"))
+  }
+}
+
+
+
+
