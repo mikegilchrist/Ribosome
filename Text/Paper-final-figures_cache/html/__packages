@@ -1,0 +1,13 @@
+base
+limSolve
+data.table
+viridisLite
+viridis
+BiocGenerics
+S4Vectors
+IRanges
+GenomeInfoDb
+GenomicRanges
+Biobase
+AnnotationDbi
+GenomicFeatures

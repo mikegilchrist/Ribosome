@@ -1,0 +1,1615 @@
+--- 
+title: "Paper_final_figures"
+author: "Ricardo Urquidi Camacho"
+date: '2022-10-15'
+output: html_document
+---
+
+## Load source files
+```{r setup, include=FALSE,echo=F}
+source("../R/Polysome_functions_RAUC.R")
+library("viridis")
+library(GenomicFeatures)
+
+```
+
+
+###Density Independent Initiation Calculations
+
+```{r DII, echo=F}
+#Define parameter set. Since determinant method is being used I chose a very small mu. Prior exploration showed that a
+#small mu behaves much like mu=0. The reason I am doing this is that calculating the adjugate matrix is slower than finding
+#the full solution.
+#mu values Hypothetical fast 1e-2  1% 9.994377e-04 5% 5.068461e-04 10% 3.500904e-04 25% 1.973310e-04 50% 1.081415e-04
+#75% 5.500915e-05 90% 2.702400e-05 95%  1.763636e-05  99% 8.043137e-06
+#Late March. Mike suggested keeping it to more round numbers ~99% 1500, ~50% 115, ~1% 11.5, sim 1.15
+par.names <- c("kappa","mu","lambda","tau","delta","s2")
+#arabidopsis
+par.ranges <- list(c(seq(0.0001,0.5,0.0001)),c(0.01,1.004561*10^-3,5.068461*10^-4,3.500904*10^-4,1.973310*10^-4,1.004561*10^-4,5.500915*10^-5,2.702400*10^-5,1.763636*10^-5,7.701635*10^-6) ,c(1),c(1),c(100000),c(1))
+imax.median <- 40
+#yeast. Rounded minutes from Presnyak and then calculated quantiles and converted to seconds.
+par.ranges <- list(c(seq(0.0001,0.5,0.0001)),c(0.01,0.0057762265, 0.0038508177, 0.0038508177, 0.0023104906, 0.0016503504, 0.0008251752, 0.0004443251, 0.0003300701, 0.0002221626) ,c(1),c(1),c(100000),c(1))
+plot1.params <- CreateParMatrix(parameter.range = par.ranges,fixed = F,par.names = par.names)
+imax.median <- 39
+plot1.params <- as.data.table(plot1.params)
+plot1.params[,"index":=1:nrow(plot1.params)]
+#calculate unmarked class
+Unmarked_imax_median_plot1 <- apply(plot1.params,1,function(i) CalcUnmarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau")))
+
+#Calculate summary statistics
+U_pct_imax_median_plot1 <- Ribo_percent(Unmarked_imax_median_plot1)
+U_mean_imax_median_plot1 <- Ribo_mean(Unmarked_imax_median_plot1)
+U_sd_imax_median_plot1 <- Ribo_sd(Unmarked_imax_median_plot1)
+U_mode_imax_median_plot1 <- Ribo_mode(Unmarked_imax_median_plot1)
+
+#plot curves for figure 1 example
+peaks_mean <- round(U_mean_imax_median_plot1[plot1.params[mu==par.ranges[[2]][10],index]])
+peaks_mode <- U_mode_imax_median_plot1[plot1.params[mu==par.ranges[[2]][10],index]]
+#peaks_mean_index <- unlist(lapply(c(0,5,10,15,25,30), function(i) which(peaks_mean==i)[1]))
+peaks_mean_index <- unlist(lapply(c(2,20,imax.median-1), function(i) which(peaks_mean==i)[1]))
+#peaks_mode_index <- unlist(lapply(c(0,5,10,15,25,30), function(i) which(peaks_mode==i)[1]))
+#peaks_mean_index[1] <- 10
+Initiation_rates <- unlist(plot1.params[peaks_mean_index,1])
+names(Initiation_rates) <- c("Low","Mid","High")
+
+Marked_imax_median_plot1 <- apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau")))
+
+M_pct_imax_median_plot1 <- Ribo_percent(Marked_imax_median_plot1)
+M_mean_imax_median_plot1 <- Ribo_mean(Marked_imax_median_plot1)
+M_sd_imax_median_plot1 <- Ribo_sd(Marked_imax_median_plot1)
+M_mode_imax_median_plot1 <- Ribo_mode(Marked_imax_median_plot1)
+
+
+Full_imax_median_plot1 <- apply(plot1.params,1,function(i) Classes(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau")))
+
+F_pct_imax_median_plot1 <- Ribo_percent(Full_imax_median_plot1)
+F_mean_imax_median_plot1 <- Ribo_mean(Full_imax_median_plot1)
+F_sd_imax_median_plot1 <- Ribo_sd(Full_imax_median_plot1)
+F_mode_imax_median_plot1 <- Ribo_mode(Full_imax_median_plot1)
+
+
+
+```
+
+###Density Independent Initiation Calculations w/ imax range
+
+```{r DII imax, echo=F}
+#imax will be 8,15,41,87,164 The 1%, 10%, 50%, 90%, and 99% quantiles of arabidopsis
+#Arabidopsis
+imax.range <- c(8,15,41,87,164)
+#yeast
+imax.range <- c(4,12,39,98,194)
+imax.percentiles <- c("1%","10%","50%","90%","99%")
+names(imax.range) <- imax.percentiles
+Unmarked_imax_range_plot1 <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) CalcUnmarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau"))))
+names(Unmarked_imax_range_plot1) <- imax.percentiles
+
+#Calculate summary statistics
+U_pct_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_percent)
+U_mean_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_mean)
+U_mode_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_mode)
+U_sd_imax_range_plot1 <- lapply(Unmarked_imax_range_plot1,Ribo_sd)
+
+U_mean_imax_range_plot1[[3]][plot1.params[(kappa==Initiation_rates[1])&(mu==par.ranges[[2]][10]),index]]
+
+#profile plots imax range
+peak_positions <- c(0.01,0.10,0.5,0.90,0.99)
+
+peaks_mean_imax_range <- lapply(1:length(imax.range),function(i) round(U_mean_imax_range_plot1[[i]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[i],2))
+peaks_mean_index_imax_range <- lapply(1:length(imax.range), function(i) unlist(lapply(peak_positions,function(j) which(peaks_mean_imax_range[[i]]==j)[1])))
+
+Marked_imax_range_plot1 <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau"))))
+names(Marked_imax_range_plot1) <- imax.percentiles
+
+#Calculate summary statistics
+M_pct_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_percent)
+M_mean_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_mean)
+M_mode_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_mode)
+M_sd_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_sd)
+
+
+Full_imax_range_plot1 <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) Classes(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau"))))
+
+F_pct_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_percent)
+F_mean_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_mean)
+F_mode_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_mode)
+F_sd_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_sd)
+
+```
+
+
+###Density Dependent Initiation Calculations
+
+```{r DDI, echo=F}
+#Define parameter set. Since determinant method is being used I chose a very small mu. Prior exploration showed that a
+#small mu behaves much like mu=0. The reason I am doing this is that calculating the adjugate matrix is slower than finding
+#the full solution.
+#mu values Hypothetical fast 1e-2  1% 9.994377e-04 5% 5.068461e-04 10% 3.500904e-04 25% 1.973310e-04 50% 1.081415e-04
+#75% 5.500915e-05 90% 2.702400e-05 95%  1.763636e-05  99% 8.043137e-06
+par.names <- c("kappa","mu","lambda","tau","delta","s2")
+#arabidopsis
+par.ranges <- list(c(seq(0.0001,0.5,0.0001)),c(0.01,1.004561*10^-3,5.068461*10^-4,3.500904*10^-4,1.973310*10^-4,1.004561*10^-4,5.500915*10^-5,2.702400*10^-5,1.763636*10^-5,7.701635*10^-6) ,c(1),c(1),c(100000),c(1))
+imax.median <- 40
+plot1.params <- CreateParMatrix(parameter.range = par.ranges,fixed = F,par.names = par.names)
+plot1.params <- as.data.table(plot1.params)
+plot1.params[,"index":=1:nrow(plot1.params)]
+#calculate unmarked class
+AT_Unmarked_imax_median_plot1_int <- apply(plot1.params,1,function(i) CalcUnmarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+AT_Marked_imax_median_plot1_int <- apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+AT_Full_imax_median_plot1_int <- apply(plot1.params,1,function(i) Classes(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+AT_F_mean_imax_median_plot1_int <- Ribo_mean(Full_imax_median_plot1_int)
+
+AT_F_pct_imax_median_plot1_int <- Ribo_percent(AT_Full_imax_median_plot1_int)
+AT_F_mean_imax_median_plot1_int <- Ribo_mean(AT_Full_imax_median_plot1_int)
+AT_F_sd_imax_median_plot1_int <- Ribo_sd(AT_Full_imax_median_plot1_int)
+AT_F_mode_imax_median_plot1_int <- Ribo_mode(AT_Full_imax_median_plot1_int)
+
+
+#yeast. Rounded minutes from Presnyak and then calculated quantiles and converted to seconds.
+par.ranges <- list(c(seq(0.0001,0.5,0.0001)),c(0.01,0.0057762265, 0.0038508177, 0.0038508177, 0.0023104906, 0.0016503504, 0.0008251752, 0.0004443251, 0.0003300701, 0.0002221626) ,c(1),c(1),c(100000),c(1))
+plot1.params <- CreateParMatrix(parameter.range = par.ranges,fixed = F,par.names = par.names)
+imax.median <- 39
+plot1.params <- as.data.table(plot1.params)
+plot1.params[,"index":=1:nrow(plot1.params)]
+#calculate unmarked class
+Unmarked_imax_median_plot1_int <- apply(plot1.params,1,function(i) CalcUnmarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+
+
+
+#Calculate summary statistics
+U_pct_imax_median_plot1_int <- Ribo_percent(Unmarked_imax_median_plot1_int)
+U_mean_imax_median_plot1_int <- Ribo_mean(Unmarked_imax_median_plot1_int)
+U_sd_imax_median_plot1_int <- Ribo_sd(Unmarked_imax_median_plot1_int)
+U_mode_imax_median_plot1_int <- Ribo_mode(Unmarked_imax_median_plot1_int)
+
+Marked_imax_median_plot1_int <- apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+
+M_pct_imax_median_plot1_int <- Ribo_percent(Marked_imax_median_plot1_int)
+M_mean_imax_median_plot1_int <- Ribo_mean(Marked_imax_median_plot1_int)
+M_sd_imax_median_plot1_int <- Ribo_sd(Marked_imax_median_plot1_int)
+M_mode_imax_median_plot1_int <- Ribo_mode(Marked_imax_median_plot1_int)
+
+
+Full_imax_median_plot1_int <- apply(plot1.params,1,function(i) Classes(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+
+F_pct_imax_median_plot1_int <- Ribo_percent(Full_imax_median_plot1_int)
+F_mean_imax_median_plot1_int <- Ribo_mean(Full_imax_median_plot1_int)
+F_sd_imax_median_plot1_int <- Ribo_sd(Full_imax_median_plot1_int)
+F_mode_imax_median_plot1_int <- Ribo_mode(Full_imax_median_plot1_int)
+
+
+```
+
+###Density Dependent Initiation w/ imax range Calculations
+
+```{r DDI imax, echo=F}
+#imax will be 8,15,41,87,164 The 1%, 10%, 50%, 90%, and 99% quantiles of arabidopsis
+#Arabidopsis
+#imax.range <- c(8,15,41,87,164)
+#yeast
+imax.range <- c(4,12,39,98,194)
+imax.percentiles <- c("1%","10%","50%","90%","99%")
+names(imax.range) <- imax.percentiles
+Unmarked_imax_range_plot1_int <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) CalcUnmarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau"))))
+names(Unmarked_imax_range_plot1_int) <- imax.percentiles
+
+#Calculate summary statistics
+U_pct_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_percent)
+U_mean_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_mean)
+U_mode_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_mode)
+U_sd_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_sd)
+
+
+Marked_imax_range_plot1_int <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau"))))
+
+M_pct_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_percent)
+M_mean_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_mean)
+M_mode_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_mode)
+M_sd_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_sd)
+
+Full_imax_range_plot1_int <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) Classes(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau"))))
+
+
+F_pct_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_percent)
+F_mean_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_mean)
+F_mode_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_mode)
+F_sd_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_sd)
+
+
+
+
+```
+
+
+```{r create directory, echo =F}
+old.dir <- getwd()
+Check_dir("../../Results/",add=T)
+setwd(paste(old.dir,"../../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+```
+## Results for Paper 
+
+### Result 1
+
+
+```{r Figure1 1, echo=FALSE, cache=TRUE}
+old.dir <- getwd()
+Check_dir("../../Results/",add=T)
+setwd(paste(old.dir,"../../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+
+png(paste(Sys.Date(),"_Figure1_DIIvsDDI_medianlength_low_marking.png",sep=""),width = 8,height = 6,units = "in",res=300)
+Initiation_rates <- c(0.001,0.01,0.1)
+layout(matrix(c(1,2,3,4,4,4,5,5,5,6,7,8,9,9,9),nrow = 3,ncol=5),widths = c(2,2,1,2,2),heights = c(1,1,1))
+
+for(i in 3:1){
+  if(i==1){
+    par(mar=c(4.1,5.1,1.1,0.1))
+  }else if(i==3){
+    par(mar=c(1.1,5.1,1.1,0.1))
+  }else{
+    par(mar=c(1.1,5.1,1.1,0.1))
+  }
+  plot(0:39,F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][10],][kappa==Initiation_rates[i],index]],pch=20,xlab="",ylab="",ylim=c(0,0.7),axes=F)
+  lines(0:39,F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][10],][kappa==Initiation_rates[i],index]],pch=20)
+  axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+  axis(2,at = seq(0,0.7,0.1),labels = seq(0,0.7,0.1),las=2)
+  box()
+  if(i == 1) {
+    mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+    text(x=10,y=0.6,"low",font=2,cex=1.2)
+  } else if(i == 2){
+    mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+    text(x=10,y=0.6,"mid",font=2,cex=1.2)
+  } else {
+    text(x=10,y=0.6,"high",font=2,cex=1.2)
+  }
+
+}
+
+#plot(0,0,col=rgb(0,0,0,0),axes=F,xlim=c(0,41),ylim=c(min(log(par.ranges[[1]],10)),max(log(par.ranges[[1]],10))))
+par(mar=c(4.1,4.1,1.1,0.1))
+
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][10],index]])),
+     col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=15,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+
+# filled.contour2(x=0:41,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][10],index]])),
+#                 col = c(grey.colors(n = 10,start = 1,end = 0,alpha = 1),rep(rgb(0,0,0,1),10)),nlevels = 20,plot.axes = c(axis(1,at = seq(0,39,5),labels = seq(0,39,5)),axis(2,at = seq(0,-5,-1),labels = seq(0,-5,-1))),
+#                 key.axes = c(axis(4,at = seq(0,1,0.2),labels = seq(0,100,20))),key.title = "Ribosomal Density")
+#contour.default(x=0:41,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][10],index]])))
+#mtext(1,text = "Polysomal Class",line=0,cex=1.2,xpd=F)
+#mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=0,cex=1.2,xpd=T)
+#mtext(4,text = "Ribosomal Density",line=1,at = -2,cex=1.2)
+
+#colorbar
+par(mar=c(1.1,1.1,1.1,1.1))
+
+
+plot(0,0,col=rgb(0,0,0,0),axes=F,xlim=c(0,2),ylim=c(0,65),xlab="",ylab="",main="")
+cols = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13])
+
+for(i in 1:12){
+#  cols <- c(grey.colors(n = 12,start = 1,end = 0,alpha = 1)[4:12],rep(rgb(0,0,0,1),1))
+  polygon(x = c(0.5,1.5,1.5,0.5,0.5), y = c(i*5,i*5,i*5+5,i*5+5,i*5),col=cols[i])
+}
+# for(j in 0:5){
+#   lines(x=c(1.5,1.6),y=rep(j*10,2))
+# }
+#
+#mtext(3,text = "Ribosomal Location Probability",font=2)
+text(x=2,y=c(5,10,seq(20,60,10),65),label= c(0,1,seq(5,25,5),"100"),las=2,xpd=T)
+#dev.off()
+
+
+for(i in 3:1){
+  if(i==1){
+    par(mar=c(4.1,4.1,1.1,1.1))
+  }else if(i==3){
+    par(mar=c(1.1,4.1,1.1,1.1))
+  }else{
+    par(mar=c(1.1,4.1,1.1,1.1))
+  }
+
+  plot(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][kappa==Initiation_rates[i],index]],pch=20,xlab="",ylab="",ylim=c(0,0.7),axes=F)
+  lines(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][kappa==Initiation_rates[i],index]],pch=20)
+  axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+  axis(2,at = seq(0,0.7,0.1),labels = seq(0,0.7,0.1),las=2)
+  box()
+  if(i == 1) {
+    mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+    text(x=10,y=0.6,"low",font=2,cex=1.2)
+  } else if(i == 2){
+    mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+    text(x=10,y=0.6,"mid",font=2,cex=1.2)
+  } else if(i==3){
+
+    text(x=10,y=0.6,"high",font=2,cex=1.2)
+
+  }
+
+}
+
+
+
+par(mar=c(4.1,4.1,1.1,0.1))
+#plot(0,0,col=rgb(0,0,0,0),axes=F,xlim=c(0,41),ylim=c(min(log(par.ranges[[1]],10)),max(log(par.ranges[[1]],10))))
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+# filled.contour2(x=0:41,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],index]])),
+#                col = c(grey.colors(n = 10,start = 1,end = 0,alpha = 1),rep(rgb(0,0,0,1),10)),nlevels = 20,plot.axes = c(axis(1,at = seq(0,39,5),labels = seq(0,39,5)),axis(2,at = seq(0,-5,-1),labels = seq(0,-5,-1))),
+#                key.axes = c(axis(4,at = seq(0,1,0.2),labels = seq(0,100,20))),key.title = "Ribosomal Density")
+#contour.default(x=0:41,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][10],index]])))
+#mtext(1,text = "Polysomal Class",line=0,cex=1.2,xpd=F)
+#mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=0,cex=1.2,xpd=T)
+#dev.off()
+
+
+
+
+dev.off()
+
+
+
+```
+
+### Result 2
+
+
+```{r Figure 2,echo=FALSE,cache=TRUE}
+
+old.dir <- getwd()
+Check_dir("../../Results/",add=T)
+setwd(paste(old.dir,"../../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+png(paste(Sys.Date(),"_Figure2_Marking_Rate_range_medianlength.png",sep=""),width = 8,height = 6,units = "in",res=300)
+
+layout(matrix(c(1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,7,8),nrow = 3),widths = c(1,2,2,2,1,3),heights = c(1,1,1))
+par(mar=c(3.1,0.1,0.1,0.1))
+
+plot(0,0,col=rgb(0,0,0,0),xlim=c(0,1),ylim=c(0,1),axes=F,xlab="",ylab="")
+
+#low marking
+par(mar=c(3.1,0.1,1.1,0.1))
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],index]])),
+     col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+#mid marking
+par(mar=c(3.1,0.5,1.1,0.1))
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][6],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+# for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+#   if(grepl(as.numeric(i),pattern = "5$|^5e")){
+#     print(i)
+#     lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+#   }else{
+#     lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+#   }
+# }
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+# axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+# mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+#High marking
+par(mar=c(3.1,0.5,1.1,0.1))
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][2],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+# for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+#   if(grepl(as.numeric(i),pattern = "5$|^5e")){
+#     print(i)
+#     lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+#   }else{
+#     lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+#   }
+# }
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+# axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+# mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+# #sim
+# par(mar=c(3.1,0.1,1.1,0.1))
+# image(x=0:41,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][1],index]])),
+#       col = c(rgb(1,1,1,1),grey.colors(n = 19,start = 1,end = 0,alpha = 1)[4:12],rep(rgb(0,0,0,1),70)),axes=F,xlab="",ylab="")
+# abline(h=log(Initiation_rates,10),col="black",lwd=1)
+# text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+# text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+# text(x=10,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+# # for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+# #   if(grepl(as.numeric(i),pattern = "5$|^5e")){
+# #     print(i)
+# #     lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+# #   }else{
+# #     lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+# #   }
+# # }
+# axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+# # axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+# mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+# # mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+# box()
+
+
+#colorbar
+par(mar=c(1.1,1.1,1.1,1.1))
+
+
+plot(0,0,col=rgb(0,0,0,0),axes=F,xlim=c(0,2),ylim=c(0,65),xlab="",ylab="",main="")
+cols = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13])
+
+for(i in 1:12){
+#  cols <- c(grey.colors(n = 12,start = 1,end = 0,alpha = 1)[4:12],rep(rgb(0,0,0,1),1))
+  polygon(x = c(0.5,1.5,1.5,0.5,0.5), y = c(i*5,i*5,i*5+5,i*5+5,i*5),col=cols[i])
+}
+# for(j in 0:5){
+#   lines(x=c(1.5,1.6),y=rep(j*10,2))
+# }
+#
+#mtext(3,text = "Ribosomal Location Probability",font=2)
+text(x=2,y=c(5,10,seq(20,60,10),65),label= c(0,1,seq(5,25,5),"100"),las=2,xpd=T)
+#dev.off()
+
+
+
+for(i in 3:1){
+  if(i==1){
+    par(mar=c(3.1,4.1,1.1,0.1))
+  }else if(i==3){
+    par(mar=c(1.1,4.1,1.1,0.1))
+  }else{
+    par(mar=c(1.1,4.1,1.1,0.1))
+  }
+  plot(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][kappa==Initiation_rates[i],index]],type="l",lty=1,xlab="",ylab="",ylim=c(0,0.7),axes=F)
+  lines(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][6],][kappa==Initiation_rates[i],index]],lty=2)
+  lines(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][2],][kappa==Initiation_rates[i],index]],lty=3)
+  # lines(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][1],][kappa==Initiation_rates[i],index]],lty=4)
+  axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+  axis(2,at = seq(0,0.7,0.1),labels = seq(0,0.7,0.1),las=2)
+  box()
+  if(i == 1) {
+    mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+    text(x=5,y=0.6,"low",font=2,cex=1.2)
+  } else if(i == 2){
+    mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+    text(x=5,y=0.6,"mid",font=2,cex=1.2)
+#Arabidopsis
+    # legend("topright",lty = 1:5,legend = c("1,500 (~99%)","115    (~50%)","11.5   (~1%)","1.15   (sim)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+
+#yeast
+    legend("topright",lty = 1:3,legend = c("52 (~99%)","7    (~50%)","2   (~1%)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+
+  } else {
+    text(x=5,y=0.6,"high",font=2,cex=1.2)
+  }
+
+}
+
+
+dev.off()
+
+png(paste(Sys.Date(),"_Figure2_At_Marking_Rate_range_medianlength.png",sep=""),width = 8,height = 6,units = "in",res=300)
+
+layout(matrix(c(1,1,1,2,2,2,3,3,3,4,4,4,5,5,5,6,7,8),nrow = 3),widths = c(1,2,2,2,1,3),heights = c(1,1,1))
+par(mar=c(3.1,0.1,0.1,0.1))
+
+plot(0,0,col=rgb(0,0,0,0),xlim=c(0,1),ylim=c(0,1),axes=F,xlab="",ylab="")
+
+#low marking 
+par(mar=c(3.1,0.1,1.1,0.1))
+image(x=0:40,y=log(par.ranges[[1]],10),z=as.matrix((AT_F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],index]])),
+     col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+axis(1,at = seq(0,40,10),labels = seq(0,40,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+#mid marking
+par(mar=c(3.1,0.5,1.1,0.1))
+image(x=0:40,y=log(par.ranges[[1]],10),z=as.matrix((AT_F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][6],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+# for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+#   if(grepl(as.numeric(i),pattern = "5$|^5e")){
+#     print(i)
+#     lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+#   }else{
+#     lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+#   }
+# }
+axis(1,at = seq(0,40,10),labels = seq(0,40,10))
+# axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+# mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+#High marking
+par(mar=c(3.1,0.5,1.1,0.1))
+image(x=0:40,y=log(par.ranges[[1]],10),z=as.matrix((AT_F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][2],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+abline(h=log(Initiation_rates,10),col="black",lwd=1)
+text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+text(x=35,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+# for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+#   if(grepl(as.numeric(i),pattern = "5$|^5e")){
+#     print(i)
+#     lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+#   }else{
+#     lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+#   }
+# }
+axis(1,at = seq(0,40,10),labels = seq(0,40,10))
+# axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+# mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+box()
+
+# #sim
+# par(mar=c(3.1,0.1,1.1,0.1))
+# image(x=0:41,y=log(par.ranges[[1]],10),z=as.matrix((F_pct_imax_median_plot1[,plot1.params[mu==par.ranges[[2]][1],index]])),
+#       col = c(rgb(1,1,1,1),grey.colors(n = 19,start = 1,end = 0,alpha = 1)[4:12],rep(rgb(0,0,0,1),70)),axes=F,xlab="",ylab="")
+# abline(h=log(Initiation_rates,10),col="black",lwd=1)
+# text(x=35,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+# text(x=35,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+# text(x=10,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+# # for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+# #   if(grepl(as.numeric(i),pattern = "5$|^5e")){
+# #     print(i)
+# #     lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+# #   }else{
+# #     lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+# #   }
+# # }
+# axis(1,at = seq(0,40,10),labels = seq(0,40,10))
+# # axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+# mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+# # mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+# box()
+
+
+#colorbar
+par(mar=c(1.1,1.1,1.1,1.1))
+
+plot(0,0,col=rgb(0,0,0,0),axes=F,xlim=c(0,2),ylim=c(0,65),xlab="",ylab="",main="")
+cols = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13])
+
+for(i in 1:12){
+#  cols <- c(grey.colors(n = 12,start = 1,end = 0,alpha = 1)[4:12],rep(rgb(0,0,0,1),1))
+  polygon(x = c(0.5,1.5,1.5,0.5,0.5), y = c(i*5,i*5,i*5+5,i*5+5,i*5),col=cols[i])
+}
+# for(j in 0:5){
+#   lines(x=c(1.5,1.6),y=rep(j*10,2))
+# }
+#
+#mtext(3,text = "Ribosomal Location Probability",font=2)
+text(x=2,y=c(5,10,seq(20,60,10),65),label= c(0,1,seq(5,25,5),"100"),las=2,xpd=T)
+#dev.off()
+
+
+
+
+for(i in 3:1){
+  if(i==1){
+    par(mar=c(3.1,4.1,1.1,0.1))
+  }else if(i==3){
+    par(mar=c(1.1,4.1,1.1,0.1))
+  }else{
+    par(mar=c(1.1,4.1,1.1,0.1))
+  }
+  plot(0:40,AT_F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][kappa==Initiation_rates[i],index]],type="l",lty=1,xlab="",ylab="",ylim=c(0,0.7),axes=F)
+  lines(0:40,AT_F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][6],][kappa==Initiation_rates[i],index]],lty=2)
+  lines(0:40,AT_F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][2],][kappa==Initiation_rates[i],index]],lty=3)
+  # lines(0:40,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][1],][kappa==Initiation_rates[i],index]],lty=4)
+  axis(1,at = seq(0,40,10),labels = seq(0,40,10),las=2)
+  axis(2,at = seq(0,0.7,0.1),labels = seq(0,0.7,0.1),las=2)
+  box()
+  if(i == 1) {
+    mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+    text(x=5,y=0.6,"low",font=2,cex=1.2)
+  } else if(i == 2){
+    mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+    text(x=5,y=0.6,"mid",font=2,cex=1.2)
+#Arabidopsis
+    legend("topright",lty = 1:5,legend = c("1,500 (~99%)","115    (~50%)","11.5   (~1%)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+
+#yeast
+    # legend("topright",lty = 1:3,legend = c("52 (~99%)","7    (~50%)","2   (~1%)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+
+  } else {
+    text(x=5,y=0.6,"high",font=2,cex=1.2)
+  }
+
+}
+
+
+dev.off()
+
+
+
+```
+
+
+
+###Result 3
+
+```{r Figure 3, echo =F,cache=T}
+old.dir <- getwd()
+Check_dir("../../Results/",add=T)
+setwd(paste(old.dir,"../../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+M_frac_imax_range_plot1 <- lapply(1:length(imax.range),function(i) Ribo_frac(Marked_imax_range_plot1[[i]],Full_imax_range_plot1[[i]]))
+U_frac_imax_range_plot1 <- lapply(1:length(imax.range),function(i) Ribo_frac(Unmarked_imax_range_plot1[[i]],Full_imax_range_plot1[[i]]))
+
+
+hist(unlist(M_frac_imax_range_plot1))
+
+df <- as.data.frame(M_frac_imax_range_plot1)
+
+colnames(df) <- imax.range
+#rownames(df) <- s
+cols <- cividis(100)
+
+
+
+
+png("M_ribo_frac_pct_DII.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),as.matrix(df)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+
+M_frac_load_imax_range_plot1 <- lapply(1:5,function(i) Ribo_frac_load(M_frac_imax_range_plot1[[i]],M_mean_imax_range_plot1[[i]],F_mean_imax_range_plot1[[i]]))
+U_frac_load_imax_range_plot1 <- lapply(1:5,function(i) Ribo_frac_load(U_frac_imax_range_plot1[[i]],U_mean_imax_range_plot1[[i]],F_mean_imax_range_plot1[[i]]))
+
+
+df_frac_load <- as.data.frame(M_frac_load_imax_range_plot1)
+
+colnames(df_frac_load) <- imax.range
+cols <- cividis(100)
+
+png("M_ribo_frac_load_DII.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),z=as.matrix(df_frac_load)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+
+
+#DDI
+M_frac_imax_range_plot1_int <- lapply(1:length(imax.range),function(i) Ribo_frac(Marked_imax_range_plot1_int[[i]],Full_imax_range_plot1_int[[i]]))
+U_frac_imax_range_plot1_int <- lapply(1:length(imax.range),function(i) Ribo_frac(Unmarked_imax_range_plot1_int[[i]],Full_imax_range_plot1_int[[i]]))
+
+hist(unlist(M_frac_imax_range_plot1_int))
+
+df <- as.data.frame(M_frac_imax_range_plot1_int)
+
+colnames(df) <- imax.range
+#rownames(df) <- s
+cols <- cividis(100)
+cols <- grey.colors(100)
+
+
+M_frac_pct_imax_median_plot1_int <- lapply(1:ncol(Marked_imax_median_plot1_int),function(i) Marked_imax_median_plot1_int[,i]/sum(Full_imax_median_plot1_int[,i]))
+U_frac_pct_imax_median_plot1_int <- lapply(1:ncol(Unmarked_imax_median_plot1_int),function(i) Unmarked_imax_median_plot1_int[,i]/sum(Full_imax_median_plot1_int[,i]))
+M_frac_pct_imax_median_plot1_int.df <- data.frame(M_frac_pct_imax_median_plot1_int)
+U_frac_pct_imax_median_plot1_int.df <- data.frame(U_frac_pct_imax_median_plot1_int)
+
+
+png(paste(Sys.Date(),"_Figure1_Unmarked_pct.png",sep=""),width = 2.5,height = 6,units = "in",res=300)
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((U_frac_pct_imax_median_plot1_int.df[,plot1.params[mu==par.ranges[[2]][10],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+#abline(h=log(Initiation_rates,10),col="black",lwd=1)
+# text(x=30,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+# text(x=10,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=3,cex=1,xpd=T)
+box()
+dev.off()
+
+
+png(paste(Sys.Date(),"_Figure1_Marked_pct.png",sep=""),width = 2.5,height = 6,units = "in",res=300)
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((M_frac_pct_imax_median_plot1_int.df[,plot1.params[mu==par.ranges[[2]][10],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 10,start = 1,end = 0,alpha = 1)[3:10]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.1,0.0125),1))
+# abline(h=log(Initiation_rates,10),col="black",lwd=1)
+# text(x=30,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=3,cex=1,xpd=T)
+box()
+dev.off()
+
+png(paste(Sys.Date(),"_Figure1_Marked_equal_scale_pct.png",sep=""),width = 2.5,height = 6,units = "in",res=300)
+image(x=0:39,y=log(par.ranges[[1]],10),z=as.matrix((M_frac_pct_imax_median_plot1_int.df[,plot1.params[mu==par.ranges[[2]][10],index]])),
+      col = c(rgb(1,1,1,1),grey.colors(n = 12,start = 1,end = 0,alpha = 1)[3:12],rep(rgb(0,0,0,1),10)),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.05,1,0.05)))
+# abline(h=log(Initiation_rates,10),col="black",lwd=1)
+# text(x=30,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=3,cex=1,xpd=T)
+box()
+dev.off()
+
+
+png(paste(Sys.Date(),"_Figure1_Full_pct.png",sep=""),width = 2.5,height = 6,units = "in",res=300)
+image(x=0:39,y=log(par.ranges[[1]],10),z=(F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],index]]), col = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13]),axes=F,xlab="",ylab="",breaks=c(0,0.01,seq(0.025,0.25,0.025),1))
+# abline(h=log(Initiation_rates,10),col="black",lwd=1)
+# text(x=30,y=log(Initiation_rates,10)[1]*0.95,"low",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[2]*0.9,"mid",font=2,cex=1.2)
+# text(x=30,y=log(Initiation_rates,10)[3]*0.8,"high",font=2,cex=1.2)
+for(i in c(seq(0.0001,0.001,0.0001),seq(0.001,0.01,0.001),seq(0.01,0.1,0.01),seq(0.1,0.5,0.1))){
+  if(grepl(as.numeric(i),pattern = "5$|^5e")){
+    print(i)
+    lines(x=c(-2,-0.5),y=log(c(i,i),10),xpd=T)
+  }else{
+    lines(x=c(-1.5,-0.5),y=log(c(i,i),10),xpd=T)
+  }
+}
+
+axis(1,at = seq(0,39,10),labels = seq(0,39,10))
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text = "Polysomal Class",line=2,cex=1,xpd=F)
+mtext(2,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=3,cex=1,xpd=T)
+box()
+dev.off()
+
+
+
+png("M_ribo_frac_pct_DDI.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),as.matrix(df)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+#production rate
+
+Fsum<- lapply(1:5,function(i) colSums(Full_imax_range_plot1_int[[i]]))
+Prot_prod <- lapply(1:5, function(i) Fsum[[i]]*F_mean_imax_range_plot1_int[[i]])
+Prot_prod_norm <- lapply(Prot_prod,function(i) i/max(unlist(Prot_prod)))
+#Fsum_frac <- lapply(Fsum,function(i) i/max(unlist(Fsum)))
+#F_mean_imax_median_plot1_int
+#Prot_prod <- lapply(1:5, function(i) Fsum_frac[[i]]*F_mean_imax_range_plot1_int[[i]])
+ 
+# Fsum_AT<- apply(AT_Full_imax_median_plot1_int,2,function(i) sum(i))
+# 
+# Fsum_frac_AT <- unlist(lapply(unlist(Fsum_AT),function(i) i/max(unlist(Fsum_AT))))
+
+
+png("protein_production.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(1:5000,Prot_prod_norm[[5]][c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,xlim=c(0,50000),ylim=c(0,1))
+lines(5001:10000,Prot_prod_norm[[5]][c(40001:45000)],lwd=2)
+lines(10001:15000,Prot_prod_norm[[5]][c(35001:40000)],lwd=2)
+lines(15001:20000,Prot_prod_norm[[5]][c(30001:35000)],lwd=2)
+lines(20001:25000,Prot_prod_norm[[5]][c(25001:30000)],lwd=2)
+lines(25001:30000,Prot_prod_norm[[5]][c(20001:25000)],lwd=2)
+lines(30001:35000,Prot_prod_norm[[5]][c(15001:20000)],lwd=2)
+lines(35001:40000,Prot_prod_norm[[5]][c(10001:15000)],lwd=2)
+lines(40001:45000,Prot_prod_norm[[5]][c(5001:10000)],lwd=2)
+lines(45001:50000,Prot_prod_norm[[5]][c(1:5000)],lwd=2)
+axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod_norm[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
+abline(v=seq(0,50000,5000),lty=2,col="grey50")
+mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+mtext(2,line=3,text = "Relative protein output",cex=1.25)
+box()
+dev.off()
+
+
+png("protein_production_stacked.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(par.ranges[[1]],Prot_prod_norm[[5]][c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
+lines(par.ranges[[1]],Prot_prod_norm[[5]][c(40001:45000)],lwd=2,lty=2)
+lines(par.ranges[[1]],Prot_prod_norm[[5]][c(20001:25000)],lwd=2,lty=3)
+lines(par.ranges[[1]],Prot_prod_norm[[5]][c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(0.0001,0.001,0.01,0.1,0.5),labels =c(0.0001,0.001,0.01,0.1,0.5) )
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote("Scaled Initiation ("*kappa/tau*")]"),font=2,line=1.5,cex=1,xpd=T)
+legend("bottomright",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life in minutes(quantile))",xjust = 1,lwd=2)
+mtext(2,line=3,text = "Relative protein output",cex=1.25)
+box()
+dev.off()
+
+# png("protein_production_stacked_AT.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+# plot(par.ranges[[1]],Prot_prod_AT[c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
+# lines(par.ranges[[1]],Prot_prod_AT[c(40001:45000)],lwd=2,lty=2)
+# lines(par.ranges[[1]],Prot_prod_AT[c(20001:25000)],lwd=2,lty=3)
+# lines(par.ranges[[1]],Prot_prod_AT[c(1:5000)],lwd=2,lty=4)
+# 
+# #axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+# axis(1,at = c(0.0001,0.001,0.01,0.1,0.5),labels =c(0.0001,0.001,0.01,0.1,0.5) )
+# axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
+# #mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+# #axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+# mtext(1,text =  bquote("Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1,xpd=T)
+# legend("bottomright",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life in minutes(quantile))",xjust = 1,lwd=2)
+# mtext(2,line=3,text = "Relative protein output",cex=1.25)
+# box()
+# dev.off()
+
+png("protein_production_stacked_log.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
+lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(40001:45000)],lwd=2,lty=2)
+lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(20001:25000)],lwd=2,lty=3)
+lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1) )
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*"Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1,xpd=T)
+legend("topleft",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life in minutes(quantile))",xjust = 1,lwd=2)
+mtext(2,line=3,text = "Relative protein output",cex=1.25)
+box()
+dev.off()
+
+png("protein_production_stacked_zoom.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(par.ranges[[1]][1:250],Fsum_frac[[5]][c(45001:50000)][1:250],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
+lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(40001:45000)][1:250],lwd=2)
+#lines(1:5000,Fsum_frac[[5]][c(35001:40000)],lwd=2)
+#lines(1:5000,Fsum_frac[[5]][c(30001:35000)],lwd=2)
+#lines(1:5000,Fsum_frac[[5]][c(25001:30000)],lwd=2)
+lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(20001:25000)][1:250],lwd=2)
+#lines(1:5000,Fsum_frac[[5]][c(15001:20000)],lwd=2)
+#lines(1:5000,Fsum_frac[[5]][c(10001:15000)],lwd=2)
+#lines(1:5000,Fsum_frac[[5]][c(5001:10000)],lwd=2)
+lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(1:5000)][1:250],lwd=2)
+axis(1,at = seq(0.05,0.95,0.1)*length(Fsum_frac[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
+abline(v=seq(0,50000,5000),lty=2,col="grey50")
+mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote("Scaled Initiation ("*kappa/tau*")"),font=2,line=1.5,cex=1,xpd=T)
+legend("bottomright",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+box()
+dev.off()
+
+
+df.prod <- df*cbind(Fsum_frac[[1]],Fsum_frac[[2]],Fsum_frac[[3]],Fsum_frac[[4]],Fsum_frac[[5]])
+
+png("M_ribo_frac_pct_DDI_production_corrected.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),as.matrix(df.prod)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+
+
+
+M_frac_load_imax_range_plot1_int <- lapply(1:5,function(i) Ribo_frac_load(M_frac_imax_range_plot1_int[[i]],M_mean_imax_range_plot1_int[[i]],F_mean_imax_range_plot1_int[[i]]))
+U_frac_load_imax_range_plot1_int <- lapply(1:5,function(i) Ribo_frac_load(U_frac_imax_range_plot1_int[[i]],U_mean_imax_range_plot1_int[[i]],F_mean_imax_range_plot1_int[[i]]))
+
+
+
+df_frac_load <- as.data.frame(M_frac_load_imax_range_plot1_int)
+
+colnames(df_frac_load) <- imax.range
+cols <- cividis(100)
+cols <- grey.colors(100)
+
+png("M_ribo_frac_load_DDI.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),z=as.matrix(df_frac_load)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+
+png(filename = "Fig3_key.png",width = 6,height = 3,units = "in",res = 300,bg=rgb(0,0,0,0))
+x.tmp <- seq(0,1,0.01)
+plot(x = x.tmp,y = rep(0,101),ylim=c(0,1),xlim=c(0,1),col=rgb(0,0,0,0),axes=F,xlab="",ylab="")
+col.tmp <- cols
+for(i in 1:100){
+  polygon(x = c(x.tmp[i],x.tmp[i+1],x.tmp[i+1],x.tmp[i],x.tmp[i]),y=c(0,0,1,1,0),col=col.tmp[i],border = NA)
+}
+axis(1,at = seq(0,1,0.2),labels = seq(0,100,20),line = -0.7,lwd = 0)
+
+dev.off()
+
+cols = c(rgb(1,1,1,1),grey.colors(n = 10,start = 1,end = 0,alpha = 1)[3:10],rep(rgb(0,0,0,1),10))
+
+png(filename = "Fig3_key_10pct.png",width = 8,height = 2,units = "in",res = 
+300,bg=rgb(0,0,0,0))
+par(mar=c(2.1,0.1,0.1,0.1))
+x.tmp <- seq(0,length(cols),1)
+plot(x = x.tmp,y = rep(0,length(x.tmp)),ylim=c(0,1),xlim=c(0,max(x.tmp)),col=rgb(0,0,0,0),axes=F,xlab="",ylab="")
+col.tmp <- cols
+for(i in 1:9){
+  polygon(x = c(x.tmp[i],x.tmp[i+1],x.tmp[i+1],x.tmp[i],x.tmp[i]),y=c(0,0,1,1,0),col=col.tmp[i],border = rgb(0,0,0,1))
+}
+axis(1,at =  c(0,1,seq(2,8,2),9),labels = c(0,1,seq(2.5,10,2.5),"100"),line = -0.7,lwd = 0)
+
+dev.off()
+
+cols = c(rgb(1,1,1,1),grey.colors(n = 13,start = 1,end = 0,alpha = 1)[3:13],rep(rgb(0,0,0,1),10))
+
+
+png(filename = "Fig3_key_25pct.png",width = 8,height = 2,units = "in",res = 300,bg=rgb(0,0,0,0))
+par(mar=c(2.1,0.1,0.1,0.1))
+x.tmp <- seq(0,length(cols),1)
+plot(x = x.tmp,y = rep(0,length(x.tmp)),ylim=c(0,1),xlim=c(0,max(x.tmp)),col=rgb(0,0,0,0),axes=F,xlab="",ylab="")
+col.tmp <- cols
+for(i in 1:12){
+  polygon(x = c(x.tmp[i],x.tmp[i+1],x.tmp[i+1],x.tmp[i],x.tmp[i]),y=c(0,0,1,1,0),col=col.tmp[i],border = rgb(0,0,0,1))
+}
+axis(1,at =  c(0,1,seq(3,11,2),12),labels = c(0,1,seq(5,25,5),"100"),line = -0.7,lwd = 0)
+
+dev.off()
+
+
+
+
+```
+
+
+
+
+
+###Result 4
+
+```{r Figure 4, echo =F,cache=T}
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+#linear
+#DII
+png("TE_linear_DII_not_scaled_for_imax.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,xlab="",ylab="",lwd=2,col="black")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2,col="grey30")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend(x=0.120,y=0.45,legend = names(imax.range)[c(1,3,5)],lty=1:3,col=c("black","grey30","grey70"),title = "prot. length")
+dev.off()
+
+png("TE_linear_DII_scaled_for_imax.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[5],type="l",lty=1,xlab="",ylab="",lwd=2,col="black")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87,lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[3],lty=2,lwd=2,col="grey30")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15,lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[1],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+#DDI
+png("TE_linear_DDI_not_scaled_for_imax.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,xlab="",ylab="",lwd=2,col="black")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2,col="grey30")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("top",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DDI_scaled_for_imax.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[5],type="l",lty=1,xlab="",ylab="",lwd=2,col="black")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87,lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[3],lty=2,lwd=2,col="grey30")
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15,lwd=2)
+lines(y=plot1.params[mu==par.ranges[[2]][10],kappa],x=U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[1],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+#log
+#DII
+png("TE_linear_DII_not_scaled_for_imax_log.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,lwd=2,xlab="",ylab="",col="black")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2,col="grey30")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("bottomright",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DII_scaled_for_imax_log.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[5],type="l",lty=1,lwd=2,xlab="",ylab="",col="black")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87,lwd=2)
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[3],lty=2,lwd=2,col="grey30")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15,lwd=2)
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[1],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("bottomright",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+#DDI
+png("TE_linear_DDI_not_scaled_for_imax_log.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,lwd=2,xlab="",ylab="",col="black")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]])
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2,col="grey30")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]])
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2,col="grey70")
+mtext(2,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("bottomright",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DDI_scaled_for_imax_log.png",width = 4,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[5],type="l",lty=1,lwd=2,xlab="",ylab="",col="black")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87)
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[3],lty=1,lwd=2,col="grey30")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15)
+lines(y=log(plot1.params[mu==par.ranges[[2]][10],kappa],10),x=U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/imax.range[1],lty=1,lwd=2,col="grey70")
+mtext(2,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(1,text="Number of Ribosomes",line=2)
+legend("bottomright",legend = names(imax.range)[c(1,3,5)],col=c("black","grey30","grey70"),lty=1:3,title = "prot. length")
+dev.off()
+
+```
+
+
+```{r Figure 4, echo =F,cache=T}
+old.dir <- getwd()
+Check_dir("../../Results/",add=T)
+setwd(paste(old.dir,"../../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+png(paste(Sys.Date(),"_relative_mRNA_production.png",sep=""),width = 5,height = 5,units = "in",res=300)
+plot(log(plot1.params[kappa==0.0001,mu],10),(1/plot1.params[kappa==0.0001,mu])/max(1/plot1.params[kappa==0.0001,mu]),pch=20,cex=2,axes=F,xlab="",ylab="")
+axis(1,at = c(-5+log(0.9,10),-4+log(seq(0.1,0.9,0.1),10),-3+log(seq(0.1,0.9,0.1),10),-2+log(seq(0.1,0.9,0.1),10),-2),labels = c(" ","-5",rep(" ",8),"-4",rep(" ",8),"-3",rep(" ",8),"-2"))
+mtext(1,at = c(-5,-4,-3,-2), text =c(-5,-4,-3,-2),font=1,line=0.5,cex=1,xpd=T)
+#axis(1,at = log(plot1.params[kappa==0.0001,mu],10),round(log(plot1.params[kappa==0.0001,mu],10),2))
+mtext(1,text =  bquote(log[10]*"("*mu*")"),font=2,line=2,cex=1.25,xpd=T)
+axis(2,at = seq(0,1,0.1),labels = seq(0,1,0.1),las=2)
+mtext(2,text =  "Relative mRNA amount",font=2,line=2.5,cex=1.25,xpd=T)
+box()
+dev.off()
+
+     #lines(1:length(plot1.params[kappa==0.0001,mu]),rev(1/plot1.params[kappa==0.0001,mu]))
+#spline.tmp <- spline(1:length(plot1.params[kappa==0.0001,mu]),rev(1/plot1.params[kappa==0.0001,mu]),n = 100)
+#lines(spline.tmp$x,spline.tmp$y,col="red")
+
+
+```
+
+
+```{r Figure 5, echo =F,cache=T}
+old.dir <- getwd()
+Check_dir("../../Results/",add=T)
+setwd(paste(old.dir,"../../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+# #Calculate summary statistics
+# U_pct_imax_median_plot1_int <- Ribo_percent(Unmarked_imax_median_plot1_int)
+# U_mean_imax_median_plot1_int <- Ribo_mean(Unmarked_imax_median_plot1_int)
+# U_sd_imax_median_plot1_int <- Ribo_sd(Unmarked_imax_median_plot1_int)
+# U_mode_imax_median_plot1_int <- Ribo_mode(Unmarked_imax_median_plot1_int)
+# 
+# M_pct_imax_median_plot1_int <- Ribo_percent(Marked_imax_median_plot1_int)
+# M_mean_imax_median_plot1_int <- Ribo_mean(Marked_imax_median_plot1_int)
+# M_sd_imax_median_plot1_int <- Ribo_sd(Marked_imax_median_plot1_int)
+# M_mode_imax_median_plot1_int <- Ribo_mode(Marked_imax_median_plot1_int)
+# 
+# F_pct_imax_median_plot1_int <- Ribo_percent(Full_imax_median_plot1_int)
+# F_mean_imax_median_plot1_int <- Ribo_mean(Full_imax_median_plot1_int)
+# F_sd_imax_median_plot1_int <- Ribo_sd(Full_imax_median_plot1_int)
+# F_mode_imax_median_plot1_int <- Ribo_mode(Full_imax_median_plot1_int)
+
+pct_U_over_F <- lapply(1:ncol(Unmarked_imax_median_plot1_int),function(i) sum(Unmarked_imax_median_plot1_int[,i])/sum(Full_imax_median_plot1_int[,i]))
+#pct_U_over_F[1:5000]
+set <- paste(seq(1,45001,5000))
+plot(log(plot1.params[mu==par.ranges[[2]][1],kappa],10),y=rep(0,5000),ylim=c(-1.5,3),col=rgb(0,0,0,0))
+for(i in c(1,2,6,10)){
+odds <- unlist(lapply(pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(odds,10),col=i)
+}
+abline(h=0,col="red")
+
+#w/AT and yeast
+pct_U_over_F <- lapply(1:ncol(Unmarked_imax_median_plot1_int),function(i) sum(Unmarked_imax_median_plot1_int[,i])/sum(Full_imax_median_plot1_int[,i]))
+
+AT_pct_U_over_F <- lapply(1:ncol(AT_Unmarked_imax_median_plot1_int),function(i) sum(AT_Unmarked_imax_median_plot1_int[,i])/sum(AT_Full_imax_median_plot1_int[,i]))
+
+#pct_U_over_F[1:5000]
+#set <- paste(seq(1,45001,5000))
+plot(log(plot1.params[mu==par.ranges[[2]][1],kappa],10),y=rep(0,5000),ylim=c(-1.5,4.5),col=rgb(0,0,0,0),axes=F,xlab="",ylab="")
+axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+axis(2,at = c(-1,0,1,2,3,4),labels = c(-1,0,1,2,3,4),las=1)
+axis(4,at = c(-1,0,1,2,3,4),labels = c("9.1%","50%","90.9%","99.01%","99.9%","99.99%"),las=1)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote("Scaled Initiation ("*kappa/tau*")"),font=2,line=2.5,cex=1,xpd=T)
+mtext(2,text =  "log10(odds mRNA in cappes state)",font=2,line=2.5,cex=1,xpd=T)
+mtext(4,text =  "%mRNA in Capped state",font=2,line=2.5,cex=1,xpd=T)
+legend("bottomright",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+for(i in c(1,2,6,10)){
+odds <- unlist(lapply(pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(odds,10),col="Black",lty=i,lwd=2)
+
+AT_odds <- unlist(lapply(AT_pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(AT_odds,10),col="red",lty=i)
+
+}
+abline(h=0,col="red")
+
+
+
+#DII
+
+pct_U_over_F_noint <- lapply(1:ncol(Unmarked_imax_median_plot1),function(i) sum(Unmarked_imax_median_plot1[,i])/sum(Full_imax_median_plot1[,i]))
+
+#pct_U_over_F[1:5000]
+set <- paste(seq(1,45001,5000))
+plot(log(plot1.params[mu==par.ranges[[2]][1],kappa],10),y=rep(0,5000),ylim=c(-1.5,3),col=rgb(0,0,0,0))
+for(i in c(1,2,6,10)){
+odds <- unlist(lapply(pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(odds,10),col= "black",lty = i , lwd=2)
+
+noint_odds <- unlist(lapply(pct_U_over_F_noint[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(noint_odds,10),col="red",lty=i)
+
+
+}
+abline(h=0,col="red")
+
+
+
+
+
+
+# #Calculate summary statistics
+# U_pct_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_percent)
+# U_mean_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_mean)
+# U_mode_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_mode)
+# U_sd_imax_range_plot1_int <- lapply(Unmarked_imax_range_plot1_int,Ribo_sd)
+# 
+# M_pct_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_percent)
+# M_mean_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_mean)
+# M_mode_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_mode)
+# M_sd_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_sd)
+# 
+# F_pct_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_percent)
+# F_mean_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_mean)
+# F_mode_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_mode)
+# F_sd_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_sd)
+
+for(j in 1:5){
+pct_U_over_F <- lapply(1:ncol(Unmarked_imax_range_plot1_int[[j]]),function(i)  sum(Unmarked_imax_median_plot1_int[,i])/sum(Full_imax_median_plot1_int[,i]))
+
+plot(log(plot1.params[mu==par.ranges[[2]][1],kappa],10),y=rep(0,5000),ylim=c(-1.5,3),col=rgb(0,0,0,0))
+for(i in c(1,2,6,10)){
+odds <- unlist(lapply(pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(odds,10),col=j)
+
+}
+
+}
+
+abline(h=0,col="red")
+
+png(paste(Sys.Date(),"_logodds.png",sep=""),width = 5,height = 5,units = "in",res=300)
+par(mar=c(4.1,5.1,1.1,1.1))
+pct_U_over_F <- lapply(1:ncol(Unmarked_imax_median_plot1_int),function(i) sum(Unmarked_imax_median_plot1_int[,i])/sum(Full_imax_median_plot1_int[,i]))
+
+AT_pct_U_over_F <- lapply(1:ncol(AT_Unmarked_imax_median_plot1_int),function(i) sum(AT_Unmarked_imax_median_plot1_int[,i])/sum(AT_Full_imax_median_plot1_int[,i]))
+
+plot(log(plot1.params[mu==par.ranges[[2]][1],kappa],10),y=rep(0,5000),ylim=c(-1.7,4.5),col=rgb(0,0,0,0),axes=F,xlab="",ylab="")
+abline(h=0,col="grey80",lty=2,lwd=2)
+abline(h= log(c(0.01010101, 0.1111111, 0.3333333, 1, 3, 9, 99, 999, 9999),10),col="grey80",lty=3,lwd=1)
+axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+#axis(2,at = c(-1,0,1,2,3,4),labels = c(-1,0,1,2,3,4),las=1)
+axis(2,at = log(c(0.01010101, 0.1111111, 0.3333333, 1, 3, 9, 99, 999, 9999),10),labels = c("1","10","25","50","75","90","99","99.9","99.99"),las=1)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*" [Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1,xpd=T)
+#mtext(2,text =  "log10(Odds mRNA in Capped State)",font=2,line=2.5,cex=1,xpd=T)
+mtext(2,text =  "%mRNA in Capped state",font=2,line=3.5,cex=1,xpd=T)
+legend("bottomleft",lty = 1:3,legend = c("52 (~99%)","7    (~50%)","2   (~1%)"), title = "Half-life Sc (min.)",xjust = 1,lwd=2)
+legend("topright",lty = 1:3,legend = c("1,500 (~99%)","115    (~50%)","11.5   (~1%)"), title = "Half-life At (min.)",xjust = 1,lwd=2,col="grey50")
+counter <- 1
+for(i in c(10,6,2)){
+odds <- unlist(lapply(pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(odds,10),col="Black",lty=counter,lwd=2)
+
+AT_odds <- unlist(lapply(AT_pct_U_over_F[plot1.params[mu==par.ranges[[2]][i],index]],function(i) i/(1-i)))
+lines(log(plot1.params[mu==par.ranges[[2]][i],kappa],10),log(AT_odds,10),col="grey50",lty=counter,lwd=2)
+counter <- counter+1
+
+}
+
+
+
+
+box()
+dev.off()
+
+     #lines(1:length(plot1.params[kappa==0.0001,mu]),rev(1/plot1.params[kappa==0.0001,mu]))
+#spline.tmp <- spline(1:length(plot1.params[kappa==0.0001,mu]),rev(1/plot1.params[kappa==0.0001,mu]),n = 100)
+#lines(spline.tmp$x,spline.tmp$y,col="red")
+
+
+
+
+for(i in c(2,seq(30,5000,250))){
+png(paste(Sys.Date(),"_Full_DDI_Distributions_",i,".png",sep=""),width = 2,height = 2,units = "in",res=300,bg = rgb(0,0,0,0))
+par(mar=c(2.1,2.6,0.1,0.1))
+print(i)
+if(any(i==c(2))){
+  ylim = c(0,1)
+}else {
+  ylim = c(0,0.4)
+}
+plot(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20,xlab="",ylab="",ylim=ylim,axes=F)
+lines(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20)
+axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+axis(2,at = seq(0,1,0.1),labels = seq(0,1,0.1),las=2)
+#mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+#mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+box()
+dev.off()
+}
+
+
+for(i in c(2,seq(30,5000,250))){
+png(paste(Sys.Date(),"_Unmarked_DDI_Distributions_",i,".png",sep=""),width = 2,height = 2,units = "in",res=300,bg = rgb(0,0,0,0))
+par(mar=c(2.1,2.6,0.1,0.1))
+print(i)
+if(any(i==c(2))){
+  ylim = c(0,1)
+}else {
+  ylim = c(0,0.4)
+}
+plot(0:39,(unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*U_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20,xlab="",ylab="",ylim=ylim,axes=F)
+lines(0:39,(unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*U_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20)
+axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+axis(2,at = seq(0,1,0.1),labels = seq(0,1,0.1),las=2)
+#mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+#mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+box()
+dev.off()
+}
+
+for(i in c(2,seq(30,5000,250))){
+png(paste(Sys.Date(),"_Marked_DDI_Distributions_",i,".png",sep=""),width = 2,height = 2,units = "in",res=300,bg = rgb(0,0,0,0))
+par(mar=c(2.1,2.6,0.1,0.1))
+print(i)
+if(any(i==c(1))){
+  ylim = c(0,1)
+}else {
+  ylim = c(0,0.4)
+}
+plot(0:39,(1-unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*M_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20,xlab="",ylab="",ylim=ylim,axes=F)
+lines(0:39,(1-unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*M_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20)
+axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+axis(2,at = seq(0,1,0.1),labels = seq(0,1,0.1),las=2)
+#mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F)
+#mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F)
+box()
+dev.off()
+}
+
+
+for(i in c(2,seq(30,5000,250))){
+png(paste(Sys.Date(),"_combined_DDI_Distributions_",i,".png",sep=""),width = 2,height = 2,units = "in",res=300,bg = rgb(0,0,0,0))
+par(mar=c(2.1,2.6,0.1,0.1))
+print(i)
+if(any(i==c(2))){
+  ylim = c(0,1)
+}else {
+  ylim = c(0,0.4)
+}
+#pct_U_over_F
+plot(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20,col="black",cex=1.5,xlab="",ylab="",ylim=ylim,axes=F,)
+lines(0:39,F_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]])
+
+points(0:39,(unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*U_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20,col="grey45",cex=1.25)
+lines(0:39,(unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*U_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]])
+
+
+points(0:39,(1-unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*M_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]],pch=20,col="grey70",cex=1)
+lines(0:39,(1-unlist(pct_U_over_F[plot1.params[mu==par.ranges[[2]][10],][i,index]]))*M_pct_imax_median_plot1_int[,plot1.params[mu==par.ranges[[2]][10],][i,index]])
+
+
+
+axis(1,at = seq(0,39,10),labels = seq(0,39,10),las=2)
+axis(2,at = seq(0,1,0.1),labels = seq(0,1,0.1),las=2)
+#mtext(1,text = "Polysomal Class",line=2.5,cex=1,xpd=F,font = 2)
+#mtext(2,text = "Ribosomal Location Probability",line=2.5,cex=1,xpd=F,font=2)
+box()
+dev.off()
+}
+
+
+
+```
+
+
+```{r Duc and Song model results, echo=F}
+#Yeast work from ENSEMBL, Presnyak, Weinberg and Duc
+#Weinberg RPKM
+Weinberg_mRNA_RPKM <- fread("../Data/GSE75897_RiboZero_RPKMs.txt",sep="\t",stringsAsFactors = F,header = F)
+setkey(Weinberg_mRNA_RPKM,"V1")
+
+#Sc length
+library(Biostrings)
+
+sc.proteins <- Biostrings::readAAStringSet("../Data/yeast_proteins.FASTA")
+
+
+#Half lives from Presnyak_2015
+Presnyak_2015 <- fread("../Data/SC_halflives_Presnyak_2015.txt")
+
+#Read in intiation rates from Duc 2018
+Duc_Initiation <- fread("../../Data/Duc2018/Initiation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=T)
+
+#Read in elongation rates from Duc 2018
+Duc_Elongation <- fread("../../Data/Duc2018/Elongation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=F)
+
+View(Duc_Elongation)
+
+Duc_Genes <- Duc_Elongation[seq(1,nrow(Duc_Elongation),7),1]
+Duc_Sequence <- Duc_Elongation[seq(2,nrow(Duc_Elongation),7),]
+Duc_Experimental <- Duc_Elongation[seq(3,nrow(Duc_Elongation),7),]
+Duc_Infered <- Duc_Elongation[seq(4,nrow(Duc_Elongation),7),]
+Duc_Sequence_lengths <- unlist(apply(Duc_Sequence,1,function(i) grep(x = unlist(i),pattern = "TGA|TAG|TAA")))
+
+Arith_mean_inferred <- apply(Duc_Infered,1,function(i) mean(as.numeric(unlist(i)),na.rm=T))
+names(Arith_mean_inferred) <- unlist(Duc_Genes)
+
+harmonic_inferred <- apply(Duc_Infered,1,function(i) mean(as.numeric(unlist(i)),na.rm=T))
+names(Arith_mean_inferred) <- unlist(Duc_Genes)
+
+min_elongation_inferred <- apply(Duc_Infered,1,function(i) mean(as.numeric(unlist(i)),na.rm=T))
+names(Arith_mean_inferred) <- unlist(Duc_Genes)
+
+
+Arith_mean_inferred
+Duc.DT <- cbind(Duc_Initiation[,c(1,3)],Arith_mean_inferred)
+setkeyv(Duc.DT,"ORF")
+
+Presnyak_2015_Duc <- Presnyak_2015[which(unlist(Presnyak_2015[,c(1)])%in%unlist(Duc.DT[,1])),]
+marking_rate_Presnyak <- log(2)/(Presnyak_2015_Duc[,4]*60)
+marking_rate_Presnyak[,"GENE":=unlist(Presnyak_2015_Duc[,1])]
+
+sc.names <- unlist(lapply(names(sc.proteins),function(i) strsplit(x=i,split="\\|")[[1]][1]))
+
+sc.proteins_Duc <- width(sc.proteins)[which(sc.names%in%unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]))]
+names(sc.proteins_Duc) <- sc.names[which(sc.names%in%unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]))]
+
+
+Weinberg_mRNA_RPKM_Duc <- Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),]
+
+
+imax_duc <- floor(sc.proteins_Duc/9)
+
+plot1.params.Duc <- plot1.params[1:704,]
+plot1.params.Duc[,1] <- Duc.DT[unlist(Presnyak_2015_Duc[,1]),2]
+plot1.params.Duc[,4] <- Duc.DT[unlist(Presnyak_2015_Duc[,1]),3]
+plot1.params.Duc[,2] <- marking_rate_Presnyak[,1]
+plot1.params.Duc[,"Genes":=marking_rate_Presnyak[,2]]
+setkey(plot1.params.Duc,"Genes")
+plot1.params.Duc[names(imax_duc),"imax":=imax_duc]
+plot1.params.Duc[,"RPKM":=Weinberg_mRNA_RPKM_Duc[,2]]
+plot1.params.Duc <- plot1.params.Duc[which(is.na(imax)==F),]
+plot1.params.Duc[,-8]
+
+Unmarked_imax_range_plot1_Duc_int <- apply(plot1.params.Duc[,-8],1,function(i) CalcUnmarkedClass(parameters = i,imax = as.numeric(unlist(i[8])),rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+
+#Calculate summary statistics
+U_pct_imax_range_plot1_Duc_int <- lapply(Unmarked_imax_range_plot1_Duc_int,Ribo_percent)
+U_mean_imax_range_plot1_Duc_int <- lapply(Unmarked_imax_range_plot1_Duc_int,Ribo_mean)
+U_mode_imax_range_plot1_Duc_int <- lapply(Unmarked_imax_range_plot1_Duc_int,Ribo_mode)
+U_sd_imax_range_plot1_Duc_int <- lapply(Unmarked_imax_range_plot1_Duc_int,Ribo_sd)
+
+Marked_imax_range_plot1_Duc_int <- apply(plot1.params.Duc[,-8],1,function(i) CalcMarkedClass(parameters = i,imax = as.numeric(unlist(i[8])),rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+
+#Calculate summary statistics
+M_pct_imax_range_plot1_Duc_int <- lapply(Marked_imax_range_plot1_Duc_int,Ribo_percent)
+M_mean_imax_range_plot1_Duc_int <- lapply(Marked_imax_range_plot1_Duc_int,Ribo_mean)
+M_mode_imax_range_plot1_Duc_int <- lapply(Marked_imax_range_plot1_Duc_int,Ribo_mode)
+M_sd_imax_range_plot1_Duc_int <- lapply(Marked_imax_range_plot1_Duc_int,Ribo_sd)
+
+Full_imax_range_plot1_Duc_int <- apply(plot1.params.Duc[,-8],1,function(i) Classes(parameters = i,imax = as.numeric(unlist(i[8])),rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
+
+F_pct_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_percent)
+F_mean_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_mean)
+F_mode_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_mode)
+F_sd_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_sd)
+
+
+F_sum_Duc <- unlist(lapply(Full_imax_range_plot1_Duc_int,sum))
+
+F_sum_Duc
+median(unlist(Weinberg_mRNA_RPKM_Duc[,2])) # is between two values 
+
+#gene 521 is 209.27 and was chosen
+
+scale.factor <- F_sum_Duc[521]/209.27
+F_sum_Duc_scaled <- F_sum_Duc/scale.factor
+
+plot(unlist(plot1.params.Duc[,RPKM]),F_sum_Duc_scaled)
+
+LFC_F_sum_Duc_scaled <- log(F_sum_Duc_scaled,10) -log(F_sum_Duc_scaled[521],10)
+LFC_Weinberg_Duc <- log(unlist(plot1.params.Duc[,RPKM]),10) - log(unlist(plot1.params.Duc[521,RPKM]),10)
+
+plot(LFC_Weinberg_Duc,LFC_F_sum_Duc_scaled,pch=20)
+points(LFC_Weinberg_Duc[521],LFC_F_sum_Duc_scaled[521],pch=20,cex=1.5,col="red")
+abline(a=c(0,1),col="red")
+abline(h=c(0),col="grey50",lty=2)
+abline(v=c(0),col="grey50",lty=2)
+cor.test(LFC_Weinberg_Duc,LFC_F_sum_Duc_scaled)
+
+scale.factor_transcription <- 10^(LFC_F_sum_Duc_scaled-LFC_Weinberg_Duc)
+hist(LFC_F_sum_Duc_scaled-LFC_Weinberg_Duc)
+plot(log(plot1.params.Duc[,kappa]/plot1.params.Duc[,tau],10),log(plot1.params.Duc[,mu],10),pch=20)
+
+#distribution of ribosomes
+Duc_mean_ribo_hist <-  hist(unlist(F_mean_imax_range_plot1_Duc_int),breaks = seq(-0.5,15.5,1))
+#% of transcript population in top 702 translated genes
+sum(Weinberg_mRNA_RPKM_Duc[,2])/sum(Weinberg_mRNA_RPKM[,2])
+#% of total transcripts detected 
+sum(Weinberg_mRNA_RPKM_Duc[,.N])/sum(Weinberg_mRNA_RPKM[,.N])
+#Ribosomal density hist
+hist(unlist(F_mean_imax_range_plot1_Duc_int)/plot1.params.Duc[,imax],breaks = seq(0,0.45,0.01))
+
+#which is the most translated by ribosome load?
+which(unlist(F_mean_imax_range_plot1_Duc_int)==max(unlist(F_mean_imax_range_plot1_Duc_int)))
+#582 with 11.44192 ribosome mean
+plot1.params.Duc[582,]
+
+
+#which is the most translated by ribosome density?
+which(unlist(F_mean_imax_range_plot1_Duc_int)/plot1.params.Duc[,imax]==max(unlist(F_mean_imax_range_plot1_Duc_int)/plot1.params.Duc[,imax]))
+#499 with 0.05876488 ribosome mean
+plot1.params.Duc[499,]
+
+setkeyv(Duc_Initiation,"ORF")
+Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2]
+
+plot(unlist(Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2]),F_mean_imax_range_plot1_Duc_int)
+
+
+plot(unlist(Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2])/min(unlist(Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2])),F_mean_imax_range_plot1_Duc_int)
+
+
+
+
+
+
+
+```
+
+
+

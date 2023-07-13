@@ -1,7 +1,6 @@
 source("R/Polysome_functions_RAUC.R")
 library("viridis")
 library(GenomicFeatures)
-
 # Manuscript figures ------------------------------------------------------
 
 # Figure 1 ----------------------------------------------------------------
@@ -47,11 +46,11 @@ setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""
 # Protein length distribution ---------------------------------------------
 png("Figure1_At_Protein_length_histogram.png",width = 5,height = 5,units = "in",res = 300)
 prot.length.hist <- hist(unlist(comp_trimmed[,2])/3,breaks = seq(0,1500,20),ylim=c(0,1100),col="white",axes=F,xlab="",main="Arabidopsis Protein Lengths")
-abline(v=quantile(comp_trimmed[,2]/3,c(0.1,0.5,0.95),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+abline(v=quantile(comp_trimmed[,2]/3,c(0.01,0.5,0.99),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
 axis(2,at=seq(0,10^max(nchar(prot.length.hist$counts)),250),labels = seq(0,10^max(nchar(prot.length.hist$counts)),250))
 axis(1,at=seq(0,1500,500),labels = c("0","500","1000",">1500"))
 mtext(1,line=2.25,text = "Protein Length (a.a.)")
-legend("topright",legend = c("Small","10% (140aa)","Medium","50% (368aa)","Large","95% (973aa)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,)
+legend("topright",legend = c("Small","1% (72aa)","Medium","50% (369aa)","Large","99% (1476aa)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,)
 box()
 dev.off()
 setwd(old.dir)
@@ -69,6 +68,8 @@ HL_At <- fread("../Results/20220301/Sorenson_results_WT.csv",stringsAsFactors = 
 
 HL_minutes <- unlist(log(2)/HL_At[-which(HL_At[,2]==0),2])
 
+HL_At[-which(HL_At[,2]==0),"HL":=unlist(log(2)/HL_At[-which(HL_At[,2]==0),2])]
+
 median(sort(HL_minutes)[-c(17900:18585)])
 HL_minutes <- sort(HL_minutes)[-c(17900:18585)]
 
@@ -80,15 +81,32 @@ old.dir <- getwd()
 Check_dir("../Results/",add=T)
 setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
 png("Figure1_At_Transcript_half_life_histogram.png",width = 5,height = 5,units = "in",res = 300)
-half.life.hist <- hist(HL_minutes,col="white",breaks = seq(0,1500,25),axes=F,xlab="",main="Arabidopsis Half-life")
-abline(v=quantile(HL_minutes,c(0.1,0.5,0.99),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+half.life.hist <- hist(HL_minutes,col="white",breaks = seq(0,1700,25),axes=F,xlab="",main="Arabidopsis Half-life")
+abline(v=quantile(HL_minutes,c(0.01,0.535,0.991),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
 axis(2,at=seq(0,10^max(nchar(half.life.hist$counts)),500),labels = seq(0,10^max(nchar(half.life.hist$counts)),500),las=2)
 axis(1,at=seq(0,1500,500),labels = c("0","500","1000",">1500"))
 mtext(1,line=2.25,text = "Transcript Half-life (min.)")
-legend("topright",legend = c("Short","10% (33 min.)","Medium","50% (107 min.)","Long","95% (655 min.)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,)
+legend("topright",legend = c("Short","~1% (11 min.)","Medium","~50% (115 min.)","Long","~99% (1500 min.)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,)
 box()
 dev.off()
 setwd(old.dir)
+
+
+
+comp_trimmed[,"AGI":=gsub(x = unlist(comp_trimmed[,1]),pattern = "\\.\\d+$",replacement = "")]
+setkeyv(comp_trimmed,"AGI")
+HL_At
+setkeyv(HL_At,"AGI")
+index_comp_trimmed <- which(unlist(comp_trimmed[-which(is.na(comp_trimmed[,2])),3])%in%unlist(HL_At[,1]))
+plot(unlist(comp_trimmed[-which(is.na(comp_trimmed[,2])),][index_comp_trimmed,2])/3,unlist(HL_At[-which(is.na(comp_trimmed[,2])),][unlist(comp_trimmed[index_comp_trimmed,1]),2]))
+which(is.na(unlist(HL_At[-which(is.na(comp_trimmed[,2])),][unlist(comp_trimmed[index_comp_trimmed,1]),2])))
+
+unlist(HL_At[comp_trimmed[which(is.na(comp_trimmed[,2])),][index_comp_trimmed,3]])
+
+
+AGI_comp_trimmed <- comp_trimmed[which(unlist(comp_trimmed[,3])%in%unlist(HL_At[,1])),3]
+plot(unlist(comp_trimmed[AGI_comp_trimmed,2])/3,log(unlist(HL_At[AGI_comp_trimmed,5]),10))
+
 
 
 # Figure 1 no int ---------------------------------------------------------
@@ -3575,15 +3593,323 @@ dev.off()
 
 
 
+# Figure 3: Role of the Marked class in protein production ----------------
+#Values inventory
+#parameters
+#par.ranges
+#calculate unmarked class DII median prot length
+#Unmarked_imax_median_plot1
+# U_pct_imax_median_plot1
+# U_mean_imax_median_plot1
+# U_sd_imax_median_plot1
+# U_mode_imax_median_plot1
+#DII imax range
+# Unmarked_imax_range_plot1
+# U_pct_imax_range_plot1
+# U_mean_imax_range_plot1
+# U_mode_imax_range_plot1
+# U_sd_imax_range_plot1
+#DDI results median prot length
+# Unmarked_imax_median_plot1_int
+# U_pct_imax_median_plot1_int
+# U_mean_imax_median_plot1_int
+# U_sd_imax_median_plot1_int
+# U_mode_imax_median_plot1_int
+#DDI results imax range prot length
+# Unmarked_imax_range_plot1_int
+# U_pct_imax_range_plot1_int
+# U_mean_imax_range_plot1_int
+# U_mode_imax_range_plot1_int
+# U_sd_imax_range_plot1_int
+
+
+
+Marked_imax_range_plot1 <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau"))))
+names(Marked_imax_range_plot1) <- imax.percentiles
+
+#Calculate summary statistics
+M_pct_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_percent)
+M_mean_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_mean)
+M_mode_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_mode)
+M_sd_imax_range_plot1 <- lapply(Marked_imax_range_plot1,Ribo_sd)
+
+
+Marked_imax_range_plot1_int <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) CalcMarkedClass(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau"))))
+
+M_pct_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_percent)
+M_mean_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_mean)
+M_mode_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_mode)
+M_sd_imax_range_plot1_int <- lapply(Marked_imax_range_plot1_int,Ribo_sd)
+
+
+Full_imax_range_plot1 <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) Classes(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("tau"))))
+
+F_pct_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_percent)
+F_mean_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_mean)
+F_mode_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_mode)
+F_sd_imax_range_plot1 <- lapply(Full_imax_range_plot1,Ribo_sd)
+
+Full_imax_range_plot1_int <- lapply(imax.range,function(j) apply(plot1.params,1,function(i) Classes(parameters = i,imax = j,rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau"))))
+
+
+F_pct_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_percent)
+F_mean_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_mean)
+F_mode_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_mode)
+F_sd_imax_range_plot1_int <- lapply(Full_imax_range_plot1_int,Ribo_sd)
 
 
 
 
+sum(Unmarked_imax_range_plot1_int[[1]][,1])/sum(Full_imax_range_plot1_int[[1]][,1])
+sum(Marked_imax_range_plot1_int[[1]][,1])/sum(Full_imax_range_plot1_int[[1]][,1])
+#DII
+M_frac_imax_range_plot1 <- lapply(1:length(imax.range),function(i) Ribo_frac(Marked_imax_range_plot1[[i]],Full_imax_range_plot1[[i]]))
+U_frac_imax_range_plot1 <- lapply(1:length(imax.range),function(i) Ribo_frac(Unmarked_imax_range_plot1[[i]],Full_imax_range_plot1[[i]]))
+
+hist(unlist(M_frac_imax_range_plot1))
+
+df <- as.data.frame(M_frac_imax_range_plot1)
+
+colnames(df) <- imax.range
+rownames(df) <- s
+cols <- cividis(100)
+
+png("M_ribo_frac_pct_DII.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),as.matrix(df)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+df[5000,1]*M_mean_imax_range_plot1[[1]][5000]
+(1-df[5000,1])*U_mean_imax_range_plot1[[1]][5000]
+F_mean_imax_range_plot1[[1]][5000]
+
+
+x <- df[5000,1]*M_mean_imax_range_plot1[[1]][5000]/F_mean_imax_range_plot1[[1]][5000]
+y <- (1-df[5000,1])*U_mean_imax_range_plot1[[1]][5000]/F_mean_imax_range_plot1[[1]][5000]
+
+
+df[3000,1]*M_mean_imax_range_plot1[[1]][3000]/F_mean_imax_range_plot1[[1]][3000]
+df[1000,1]*M_mean_imax_range_plot1[[1]][1000]/F_mean_imax_range_plot1[[1]][1000]
+df[500,1]*M_mean_imax_range_plot1[[1]][500]/F_mean_imax_range_plot1[[1]][500]
+df[100,1]*M_mean_imax_range_plot1[[1]][100]/F_mean_imax_range_plot1[[1]][100]
+
+
+M_frac_load_imax_range_plot1 <- lapply(1:5,function(i) Ribo_frac_load(M_frac_imax_range_plot1[[i]],M_mean_imax_range_plot1[[i]],F_mean_imax_range_plot1[[i]]))
+U_frac_load_imax_range_plot1 <- lapply(1:5,function(i) Ribo_frac_load(U_frac_imax_range_plot1[[i]],U_mean_imax_range_plot1[[i]],F_mean_imax_range_plot1[[i]]))
+
+plot(M_frac_imax_range_plot1[[1]])
+plot(M_frac_load_imax_range_plot1[[1]])
+
+plot(U_frac_imax_range_plot1[[1]])
+plot(U_frac_load_imax_range_plot1[[1]])
 
 
 
+plot(F_mean_imax_range_plot1[[1]])
+
+df_frac_load <- as.data.frame(M_frac_load_imax_range_plot1)
+
+colnames(df_frac_load) <- imax.range
+cols <- cividis(100)
+
+png("M_ribo_frac_load_DII.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),z=as.matrix(df_frac_load)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+max(df_frac_load)
+min(df_frac_load)
 
 
+
+#DDI
+M_frac_imax_range_plot1_int <- lapply(1:length(imax.range),function(i) Ribo_frac(Marked_imax_range_plot1_int[[i]],Full_imax_range_plot1_int[[i]]))
+U_frac_imax_range_plot1_int <- lapply(1:length(imax.range),function(i) Ribo_frac(Unmarked_imax_range_plot1_int[[i]],Full_imax_range_plot1_int[[i]]))
+
+hist(unlist(M_frac_imax_range_plot1_int))
+
+df <- as.data.frame(M_frac_imax_range_plot1_int)
+
+colnames(df) <- imax.range
+rownames(df) <- s
+cols <- cividis(100)
+cols <- grey.colors(100)
+
+png("M_ribo_frac_pct_DDI.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),as.matrix(df)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+df[5000,1]*M_mean_imax_range_plot1_int[[1]][5000]
+(1-df[5000,1])*U_mean_imax_range_plot1_int[[1]][5000]
+F_mean_imax_range_plot1_int[[1]][5000]
+
+
+x <- df[5000,1]*M_mean_imax_range_plot1_int[[1]][5000]/F_mean_imax_range_plot1_int[[1]][5000]
+y <- (1-df[5000,1])*U_mean_imax_range_plot1_int[[1]][5000]/F_mean_imax_range_plot1_int[[1]][5000]
+
+
+df[3000,1]*M_mean_imax_range_plot1_int[[1]][3000]/F_mean_imax_range_plot1_int[[1]][3000]
+df[1000,1]*M_mean_imax_range_plot1_int[[1]][1000]/F_mean_imax_range_plot1_int[[1]][1000]
+df[500,1]*M_mean_imax_range_plot1_int[[1]][500]/F_mean_imax_range_plot1_int[[1]][500]
+df[100,1]*M_mean_imax_range_plot1_int[[1]][100]/F_mean_imax_range_plot1_int[[1]][100]
+
+
+M_frac_load_imax_range_plot1_int <- lapply(1:5,function(i) Ribo_frac_load(M_frac_imax_range_plot1_int[[i]],M_mean_imax_range_plot1_int[[i]],F_mean_imax_range_plot1_int[[i]]))
+U_frac_load_imax_range_plot1_int <- lapply(1:5,function(i) Ribo_frac_load(U_frac_imax_range_plot1_int[[i]],U_mean_imax_range_plot1_int[[i]],F_mean_imax_range_plot1_int[[i]]))
+
+plot(M_frac_imax_range_plot1_int[[1]])
+plot(M_frac_load_imax_range_plot1_int[[1]])
+
+plot(U_frac_imax_range_plot1_int[[1]])
+plot(U_frac_load_imax_range_plot1_int[[1]])
+
+
+
+plot(F_mean_imax_range_plot1[[1]])
+
+df_frac_load <- as.data.frame(M_frac_load_imax_range_plot1_int)
+
+colnames(df_frac_load) <- imax.range
+cols <- cividis(100)
+cols <- grey.colors(100)
+
+png("M_ribo_frac_load_DDI.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+image(y=seq(0,1,0.2),x=seq(0,1,1/(50000)),z=as.matrix(df_frac_load)*100,col=cols,breaks=seq(0,100,1),axes=F,xlab="",ylab="")
+axis(1,at = seq(0.05,0.95,0.1),labels = round(log(par.ranges[[2]],10),2),las=2)
+axis(2,at = seq(0.1,0.9,0.2),labels = imax.range,las=1)
+mtext(1,line=3,text = "mu")
+mtext(2,line=3,text = "imax")
+box()
+dev.off()
+
+max(df_frac_load)
+min(df_frac_load)
+
+# (M_frac_imax_range_plot1_int[[1]]t(M_mean_imax_range_plot1_int[[1]]))/F_mean_imax_range_plot1_int[[1]]
+# ((1-M_frac_imax_range_plot1_int[[1]][1])U_mean_imax_range_plot1_int[[1]][1])/F_mean_imax_range_plot1_int[[1]][1]
+
+
+png(filename = "Fig3_key.png",width = 6,height = 3,units = "in",res = 300,bg=rgb(0,0,0,0))
+x.tmp <- seq(0,1,0.01)
+plot(x = x.tmp,y = rep(0,101),ylim=c(0,1),xlim=c(0,1),col=rgb(0,0,0,0),axes=F,xlab="",ylab="")
+col.tmp <- cols
+for(i in 1:100){
+  polygon(x = c(x.tmp[i],x.tmp[i+1],x.tmp[i+1],x.tmp[i],x.tmp[i]),y=c(0,0,1,1,0),col=col.tmp[i],border = NA)
+}
+axis(1,at = seq(0,1,0.2),labels = seq(0,100,20),line = -0.7,lwd = 0)
+
+dev.off()
+
+
+
+# Figure 4 length independence --------------------------------------------
+
+#linear
+#DII
+png("TE_linear_DII_not_scaled_for_imax.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,xlab="",ylab="",lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2)
+mtext(1,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend(x=0.35,y=140,legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DII_scaled_for_imax.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/164,type="l",lty=1,xlab="",ylab="",lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87,lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/41,lty=2,lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15,lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/8,lty=3,lwd=2)
+mtext(1,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("bottomright",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+#DDI
+png("TE_linear_DDI_not_scaled_for_imax.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,xlab="",ylab="",lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2)
+mtext(1,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DDI_scaled_for_imax.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/164,type="l",lty=1,xlab="",ylab="",lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87,lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/41,lty=2,lwd=2)
+#lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15,lwd=2)
+lines(plot1.params[mu==par.ranges[[2]][10],kappa],U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/8,lty=3,lwd=2)
+mtext(1,text=bquote("Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("bottomright",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+#log
+#DII
+png("TE_linear_DII_not_scaled_for_imax_log.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,lwd=2,xlab="",ylab="")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2)
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]],lwd=2)
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2)
+mtext(1,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DII_scaled_for_imax_log.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/164,type="l",lty=1,lwd=2,xlab="",ylab="")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87,lwd=2)
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/41,lty=2,lwd=2)
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15,lwd=2)
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/8,lty=3,lwd=2)
+mtext(1,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+#DDI
+png("TE_linear_DDI_not_scaled_for_imax_log.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]],type="l",lty=1,lwd=2,xlab="",ylab="")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]])
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]],lty=2,lwd=2)
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]])
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]],lty=3,lwd=2)
+mtext(1,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
+
+png("TE_linear_DDI_scaled_for_imax_log.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[5]][plot1.params[mu==par.ranges[[2]][10],index]]/164,type="l",lty=1,lwd=2,xlab="",ylab="")
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[4]][plot1.params[mu==par.ranges[[2]][10],index]]/87)
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[3]][plot1.params[mu==par.ranges[[2]][10],index]]/41,lty=1,lwd=2)
+#lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[2]][plot1.params[mu==par.ranges[[2]][10],index]]/15)
+lines(log(plot1.params[mu==par.ranges[[2]][10],kappa],10),U_mean_imax_range_plot1_int[[1]][plot1.params[mu==par.ranges[[2]][10],index]]/8,lty=1,lwd=2)
+mtext(1,text=bquote("log2 Scaled Initiation ("*kappa/tau*")"),line=2)
+mtext(2,text="Number of Ribosomes",line=2)
+legend("topleft",legend = names(imax.range)[c(1,3,5)],lty=1:3,title = "prot. length")
+dev.off()
 
 
 

@@ -625,7 +625,6 @@ imax_range <- c(2:50,100,150,200,250,300)
 
 # focused examples --------------------------------------------------------
 library(Biostrings)
-At <- Biostrings::readDNAStringSet("../../../Results/20220117/CDS_arabidopsis.txt")
 At <- Biostrings::readDNAStringSet("../../Project_1/Results/20220117/CDS_arabidopsis.txt")
 hist(width(At)/3)
 At_lengths <- sort(width(At))
@@ -649,11 +648,11 @@ quantile(Dm_lengths,c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))/3
 hist(Dm_lengths[which(Dm_lengths<3000)]/3,breaks = seq(1,1010,10))
 
 
-HL_At <- fread("../../../Results/20220117/Half life Sorenson.csv",stringsAsFactors = F,header=T)
+HL_At <- fread("../Data/Half life Sorenson.csv",stringsAsFactors = F,header=T)
 hist(log(unlist(HL_At[which(unlist(HL_At[,3])<100000),3]),10))
 median(unlist(HL_At[,3]),na.rm=T)
 quantile(unlist(HL_At[which(unlist(HL_At[,3])<100000),3]),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))
-
+log(2)/(quantile(unlist(HL_At[which(unlist(HL_At[,3])<100000),3]),c(0.01,0.05,0.1,0.25,0.5,0.75,0.9,0.95,0.99))*60)
 
 
 
