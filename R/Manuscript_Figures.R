@@ -40,10 +40,11 @@ comp_and_exp_w_annotation <- CDS_LENGTHS[-hypothetical,][-transmembrane,][-evo,]
 comp_trimmed <- comp_and_exp_w_annotation
 comp_trimmed[which(comp_trimmed[,2]>4500),2] <- 4500
 
+# Protein length distribution ---------------------------------------------
+
 old.dir <- getwd()
 Check_dir("../Results/",add=T)
 setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
-# Protein length distribution ---------------------------------------------
 png("Figure1_At_Protein_length_histogram.png",width = 5,height = 5,units = "in",res = 300)
 prot.length.hist <- hist(unlist(comp_trimmed[,2])/3,breaks = seq(0,1500,20),ylim=c(0,1100),col="white",axes=F,xlab="",main="Arabidopsis Protein Lengths")
 abline(v=quantile(comp_trimmed[,2]/3,c(0.01,0.5,0.99),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
@@ -54,6 +55,23 @@ legend("topright",legend = c("Small","1% (72aa)","Medium","50% (369aa)","Large",
 box()
 dev.off()
 setwd(old.dir)
+
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("Figure1_At_Protein_length_histogram_imax.png",width = 5,height = 5,units = "in",res = 300)
+prot.length.hist <- hist(unlist(comp_trimmed[,2])/27,breaks = seq(0,180,2),ylim=c(0,1000),col="white",axes=F,xlab="",main="Arabidopsis Protein Lengths")
+abline(v=quantile(comp_trimmed[,2]/27,c(0.01,0.5,0.99),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+axis(2,at=seq(0,10^max(nchar(prot.length.hist$counts)),250),labels = seq(0,10^max(nchar(prot.length.hist$counts)),250))
+axis(1,at=seq(0,180,30),labels = seq(0,180,30))
+mtext(1,line=2.25,text = "Protein Length (imax)")
+legend("topright",legend = c("Small","1% (8)","Medium","50% (40)","Large","99% (164)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,title="quantile (imax)")
+box()
+dev.off()
+setwd(old.dir)
+
+mean(unlist(comp_trimmed[,2])/27,na.rm=T)
+sd(unlist(comp_trimmed[,2])/27,na.rm=T)
 
 # Half Life Distribution --------------------------------------------------
 HL_At <- fread("../../Project_1/Results/20220117/Half life Sorenson.csv",stringsAsFactors = F,header=T)
@@ -91,7 +109,23 @@ box()
 dev.off()
 setwd(old.dir)
 
+ylim=c(0,10)
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("Figure1_AT_Transcript_marking_rate_histogram.png",width = 5,height = 5,units = "in",res = 300)
+half.life.hist <- hist(log(log(2)/unlist(HL_minutes*60),10),col="white",breaks = seq(-6,-1,0.1),axes=F,xlab="",ylim=c(0,2000),main="Arabidopsis Marking Rate")
+abline(v=quantile(log(log(2)/unlist(HL_minutes*60),10),c(0.01,0.535,0.991),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+axis(2,at=seq(0,2000,250),labels = seq(0,2000,250),las=2)
+axis(1,at=seq(-6,-1.5,0.5),labels =seq(-6,-1.5,0.5))
+mtext(1,line=2.25,text = bquote(log[10]*" [Marking rate, "*mu*" (1/s)]"))
+legend("topright",legend = c("Short","~1% (-5.1 1/s)","Medium","~50% (-3.9 1/s)","Long","~99% (-3.0 1/s)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,title = as.expression(bquote("quantile ("*log[10]*"["*mu*"])")))
+box()
+dev.off()
+setwd(old.dir)
 
+mean(log(2)/unlist(HL_minutes*60),na.rm=T)
+sd(log(2)/unlist(HL_minutes*60),na.rm=T)
 
 comp_trimmed[,"AGI":=gsub(x = unlist(comp_trimmed[,1]),pattern = "\\.\\d+$",replacement = "")]
 setkeyv(comp_trimmed,"AGI")

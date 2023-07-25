@@ -65,11 +65,10 @@ plot(as.numeric(unlist(Presnyak_2015[index,c(4)][-which(is.na(Chan_2018[index,c(
      as.numeric(unlist(Chan_2018[index,c(3)][-which(is.na(Chan_2018[index,c(3)]))]))/max(as.numeric(unlist(Chan_2018[index,c(3)][-which(is.na(Chan_2018[index,c(3)]))]))))
 
 
-
+# Protein length distribution ---------------------------------------------
 old.dir <- getwd()
 Check_dir("../Results/",add=T)
 setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
-# Protein length distribution ---------------------------------------------
 png("Figure1_Sc_Protein_length_histogram.png",width = 5,height = 5,units = "in",res = 300)
 sc.proteins.length <- width(sc.proteins)
 sc.proteins.trim <- sc.proteins.length
@@ -84,6 +83,26 @@ box()
 dev.off()
 setwd(old.dir)
 
+sc.proteins.length <- width(sc.proteins)
+sc.proteins.trim <- sc.proteins.length
+sc.proteins.trim[which(sc.proteins.length>1500)] <- 1500
+
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("Figure1_Sc_Protein_length_histogram_imax.png",width = 5,height = 5,units = "in",res = 300)
+prot.length.hist <- hist(sc.proteins.trim/9,breaks = seq(0,180,2),ylim=c(0,500),col="white",axes=F,xlab="",main="Yeast Protein Lengths")
+abline(v=quantile(sc.proteins.trim/9,c(0.01,0.5,0.99),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+axis(2,at=seq(0,10^max(nchar(prot.length.hist$counts)),250),labels = seq(0,10^max(nchar(prot.length.hist$counts)),250))
+axis(1,at=seq(0,180,30),labels = seq(0,180,30))
+mtext(1,line=2.25,text = "Protein Length (imax)")
+legend("topright",legend = c("Small","1% (4)","Medium","50% (39)","Large","99% (167)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,title="quantile (imax)")
+box()
+dev.off()
+setwd(old.dir)
+
+mean(sc.proteins.trim/9,na.rm=T)
+sd(sc.proteins.trim/9,na.rm=T)
 # Half Life Distribution --------------------------------------------------
 HL_At <- fread("../../Project_1/Results/20220117/Half life Sorenson.csv",stringsAsFactors = F,header=T)
 hist(log(unlist(HL_At[which(unlist(HL_At[,3])<100000),3]),10))
@@ -120,16 +139,32 @@ box()
 dev.off()
 setwd(old.dir)
 
+ylim=c(0,10)
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("Figure1_Sc_Transcript_marking_rate_histogram.png",width = 5,height = 5,units = "in",res = 300)
+half.life.hist <- hist(log(log(2)/unlist(Presnyak_2015[!is.na(unlist(Presnyak_2015[,4])),4]*60),10),col="white",breaks = seq(-4,-1,0.1),axes=F,xlab="",ylim=c(0,600),main="Yeast Marking Rate")
+abline(v=quantile(log(log(2)/unlist(Presnyak_2015[!is.na(unlist(Presnyak_2015[,4])),4]*60),10),c(0.015,0.475,0.989),na.rm=T),col="black",lty=c(3,2,4),lwd=2)
+axis(2,at=seq(0,600,100),labels = seq(0,600,100),las=2)
+axis(1,at=seq(-4,-1.5,0.5),labels =seq(-4,-1.5,0.5))
+mtext(1,line=2.25,text = bquote(log[10]*" [Marking rate, "*mu*" (1/s)]"))
+legend("topright",legend = c("Short","~1% (-3.6 1/s)","Medium","~50% (-2.8 1/s)","Long","~99% (-2.2 1/s)"),lty=c(3,3,2,2,4,4),col=rep(c("black","white"),3),lwd=2,xjust = 0.5,title = as.expression(bquote("quantile ("*log[10]*"["*mu*"])")))
+box()
+dev.off()
+setwd(old.dir)
 
+mean(log(2)/unlist(Presnyak_2015[!is.na(unlist(Presnyak_2015[,4])),4]*60),na.rm=T)
+sd(log(2)/unlist(Presnyak_2015[!is.na(unlist(Presnyak_2015[,4])),4]*60),na.rm=T)
 
 #comp with duc
 
 sc.proteins
 #Read in intiation rates from Duc 2018
-Duc_Initiation <- fread("../../Data/Duc2018/Initiation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=T)
+Duc_Initiation <- fread("../Data/Duc2018/Initiation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=T)
 
 #Read in elongation rates from Duc 2018
-Duc_Elongation <- fread("../../Data/Duc2018/Elongation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=F)
+Duc_Elongation <- fread("../Data/Duc2018/Elongation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=F)
 
 View(Duc_Elongation)
 
@@ -188,7 +223,29 @@ plot(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[,1]),2]),10),unlist(Duc.DT[,Ari
 plot(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[,1]),2]),10),log(unlist(Duc.DT[,Inferred_Initiation_rate/Arith_mean_inferred]),10))
 plot(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[names(unlist(sc.proteins_Duc)),1]),2]),10),unlist(sc.proteins_Duc))
 plot(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2]),10),unlist(Presnyak_2015_Duc[,4]))
+cor.test(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2]),10),log(unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10),method="spearman")
+plot(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2]),10),log(unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10))
 
+
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("lambdavsmu_log.png",width = 5,height = 5,units = "in",res = 300)
+plot(log(unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10),log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2])*unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10),pch=20,xlab="",ylab="")
+mtext(side = 2,text = bquote(Sigma*"m"[i]*" x "*mu*" = "*lambda),cex=1.5,font=2,line=2.5)
+mtext(side = 1,text = bquote(mu),cex=1.5,font=2,line=2.5)
+ct <- cor.test(log(unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10),log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2])*unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10))
+text(x = -2.5,y =-1.5,labels = bquote(rho*"="*.(ct$estimate)),font=2,cex=1.5)
+#abline(a=c(2.1,1))
+#abline(h=0)
+#abline(v=0)
+cor.test(log(unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10),log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2])*unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10))
+dev.off()
+setwd(old.dir)
+
+
+GOI <- which(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),2])*unlist(log(2)/(Presnyak_2015_Duc[,4]*60)),10)>0.4)
+Presnyak_2015_Duc[GOI,1]
 
 cor.test(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[,1]),2]),10),unlist(Duc.DT[,Inferred_Initiation_rate]))
 cor.test(log(unlist(Weinberg_mRNA_RPKM[unlist(Duc.DT[,1]),2]),10),unlist(Duc.DT[,Arith_mean_inferred]))
@@ -276,3 +333,74 @@ legend("topright",legend = c("Low","~1% (0.29 RPKM)","Median","~50% (46 RPKM)","
 box()
 dev.off()
 setwd(old.dir)
+
+
+
+# expected value ribosome toy model ---------------------------------------
+
+library(truncnorm)
+
+ell <- seq(0,40,1)
+capped_p <- matrix(ncol=41,nrow=41)
+for(i in 2:40){
+  capped_p[i,] <- dtruncnorm(0:40,a=0,b=40,mean=i,sd=3)
+}
+capped_p[1,] <- c(1,rep(0,40))
+capped_p[41,] <- c(rep(0,40),1)
+
+capped_p <- t(apply(capped_p,1,function(i) i/sum(i)))
+
+plot(seq(0,40),capped_p[1,],pch=20,type="l")
+counter <- 2
+for(i in 1:41){#(c(5,10,15,20,25,30,35,40)+1)){
+  lines(seq(0,40),capped_p[i,],pch=20,col=i)
+  counter <- counter + 1
+}
+
+harmonic <- function(n){
+  tmp.out <- vector(length = n)
+  for(i in 1:n){
+    tmp.out[i] <- 1/i
+  }
+  return(tmp.out)
+}
+harmonic(40)
+sum(harmonic(40))
+
+ess <- matrix(ncol=41,nrow=41)
+for(i in 1:nrow(ess)){
+  for(j in 1:ncol(ess)){
+    ess[i,j] <- sum(capped_p[i,j:41])
+  }
+
+}
+#this includes i=0, so result should be Hn +1 for all in imax
+HN_minus <- (ess%*%c(1,harmonic(40))-1)
+sum(harmonic(40))
+
+ribo_mean_marked <- c(0,rowSums(ess)[-1]/HN_minus[-1])
+ribo_mean_unmarked <- capped_p%*%0:40
+
+rowSums(ess)
+plot(HN_minus,rowSums(ess),pch=20)
+
+plot(0:40,rowSums(ess)/HN_minus,pch=20)
+plot(0:40/40,HN_minus/HN_minus[41],pch=20)
+abline(a=c(0,1),col="red")
+plot(0:40/40,rowSums(ess)/sum(ess[41,]),pch=20)
+abline(a=c(0,1),col="red")
+plot(HN_minus/HN_minus[41],rowSums(ess)/sum(ess[41,]),pch=20)
+abline(a=c(0,1),col="red")
+
+plot(ribo_mean_marked,ribo_mean_unmarked,pch=20)
+
+png("../Results/20230717/Mean_Ribo_Load_Decapped_Capped_ratio.png",width = 6,height = 6,units = "in",res = 300)
+plot(0:40,ribo_mean_marked/ribo_mean_unmarked,pch=20,xlab="",ylab="",cex=1.25)
+mtext(1,line=3,text = "Mean Ribosomal Load Capped State",cex=1.25)
+mtext(2,line=3,text = "Mean Ribosomal Load: Decapped/Capped",cex=1.25)
+dev.off()
+
+ribo_mean_unmarked[2]
+ribo_mean_marked[2]
+
+

@@ -891,6 +891,8 @@ dev.off()
 Fsum<- lapply(1:5,function(i) colSums(Full_imax_range_plot1_int[[i]]))
 Prot_prod <- lapply(1:5, function(i) Fsum[[i]]*F_mean_imax_range_plot1_int[[i]])
 Prot_prod_norm <- lapply(Prot_prod,function(i) i/max(unlist(Prot_prod)))
+
+
 #Fsum_frac <- lapply(Fsum,function(i) i/max(unlist(Fsum)))
 #F_mean_imax_median_plot1_int
 #Prot_prod <- lapply(1:5, function(i) Fsum_frac[[i]]*F_mean_imax_range_plot1_int[[i]])
@@ -971,26 +973,134 @@ mtext(2,line=3,text = "Relative protein output",cex=1.25)
 box()
 dev.off()
 
-png("protein_production_stacked_zoom.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(par.ranges[[1]][1:250],Fsum_frac[[5]][c(45001:50000)][1:250],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
-lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(40001:45000)][1:250],lwd=2)
-#lines(1:5000,Fsum_frac[[5]][c(35001:40000)],lwd=2)
-#lines(1:5000,Fsum_frac[[5]][c(30001:35000)],lwd=2)
-#lines(1:5000,Fsum_frac[[5]][c(25001:30000)],lwd=2)
-lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(20001:25000)][1:250],lwd=2)
-#lines(1:5000,Fsum_frac[[5]][c(15001:20000)],lwd=2)
-#lines(1:5000,Fsum_frac[[5]][c(10001:15000)],lwd=2)
-#lines(1:5000,Fsum_frac[[5]][c(5001:10000)],lwd=2)
-lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(1:5000)][1:250],lwd=2)
-axis(1,at = seq(0.05,0.95,0.1)*length(Fsum_frac[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
-axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
-abline(v=seq(0,50000,5000),lty=2,col="grey50")
-mtext(1,line=3,text = "log10 (mu)",cex=1.25)
-axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
-mtext(1,text =  bquote("Scaled Initiation ("*kappa/tau*")"),font=2,line=1.5,cex=1,xpd=T)
-legend("bottomright",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+
+Prot_prod_U <- U_mean_imax_median_plot1_int*colSums(Unmarked_imax_median_plot1_int)
+Prot_prod_M <- M_mean_imax_median_plot1_int*colSums(Marked_imax_median_plot1_int)
+Prot_prod <- Prot_prod_M + Prot_prod_U
+
+Prot_prod_U_norm <- Prot_prod_U/max(Prot_prod)
+Prot_prod_M_norm <- Prot_prod_M/max(Prot_prod)
+Prot_prod_norm <- Prot_prod/max(Prot_prod)
+
+png("protein_production_stacked_log_correct.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
+#lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(45001:50000)],lwd=2,lty=2,col="red")
+#lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(45001:50000)],lwd=2,lty=2,col="blue")
+ lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=3,lty=2)
+ lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=3,lty=3)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1),cex=2)
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1,cex=2)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*"Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1.5,xpd=T)
+legend("topleft",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)"), title = "Half-life in minutes(quantile))",xjust = 1,lwd=3,cex=1.25)
+mtext(2,line=3,text = "Relative protein output",cex=1.5)
 box()
 dev.off()
+
+
+
+png("protein_production_stacked_log_correc_low_marking.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(45001:50000)],lwd=3,lty=1,col="grey50")
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(45001:50000)],lwd=3,lty=2,col="grey")
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1),cex=2)
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1,cex=2)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*"Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1.5,xpd=T)
+legend("topleft",lty = c(1,1,2),col=c("black","grey50","grey"),legend = c("Full","Capped","Decapped"),xjust = 1,lwd=3,cex=1.25)
+mtext(2,line=3,text = "Relative protein output",cex=1.5)
+box()
+dev.off()
+
+
+png("protein_production_stacked_log_correct_mid_marking.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(40001:45000)],lwd=3,lty=1,col="grey50")
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(40001:45000)],lwd=3,lty=2,col="grey")
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1),cex=2)
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1,cex=2)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*"Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1.5,xpd=T)
+legend("topleft",lty = c(1,1,2),col=c("black","grey50","grey"),legend = c("Full","Capped","Decapped"),xjust = 1,lwd=3,cex=1.25)
+mtext(2,line=3,text = "Relative protein output",cex=1.5)
+box()
+dev.off()
+
+png("protein_production_stacked_log_correct_high_marking.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(20001:25000)],lwd=3,lty=1,col="grey50")
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(20001:25000)],lwd=3,lty=2,col="grey")
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1),cex=2)
+axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1,cex=2)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*"Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1.5,xpd=T)
+legend("topleft",lty = c(1,1,2),col=c("black","grey50","grey"),legend = c("Full","Capped","Decapped"),xjust = 1,lwd=3,cex=1.25)
+mtext(2,line=3,text = "Relative protein output",cex=1.5)
+box()
+dev.off()
+
+png("protein_production_stacked_log_correct_high_marking_zoom.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,0.2))
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(20001:25000)],lwd=3,lty=1,col="grey50")
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(20001:25000)],lwd=3,lty=2,col="grey")
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
+# lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
+
+#axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1),cex=2)
+axis(2,at = seq(0,1,0.05),labels = seq(0,1,0.05),las=1,cex=2)
+#mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+#axis(1,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+mtext(1,text =  bquote(log[10]*"Scaled Initiation ("*kappa/tau*")]"),font=2,line=2.5,cex=1.5,xpd=T)
+legend("topleft",lty = c(1,1,2),col=c("black","grey50","grey"),legend = c("Full","Capped","Decapped"),xjust = 1,lwd=3,cex=1.25)
+mtext(2,line=3,text = "Relative protein output",cex=1.5)
+box()
+dev.off()
+
+
+# png("protein_production_stacked_zoom.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
+# plot(par.ranges[[1]][1:250],Fsum_frac[[5]][c(45001:50000)][1:250],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
+# lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(40001:45000)][1:250],lwd=2)
+# #lines(1:5000,Fsum_frac[[5]][c(35001:40000)],lwd=2)
+# #lines(1:5000,Fsum_frac[[5]][c(30001:35000)],lwd=2)
+# #lines(1:5000,Fsum_frac[[5]][c(25001:30000)],lwd=2)
+# lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(20001:25000)][1:250],lwd=2)
+# #lines(1:5000,Fsum_frac[[5]][c(15001:20000)],lwd=2)
+# #lines(1:5000,Fsum_frac[[5]][c(10001:15000)],lwd=2)
+# #lines(1:5000,Fsum_frac[[5]][c(5001:10000)],lwd=2)
+# lines(par.ranges[[1]][1:250],Fsum_frac[[5]][c(1:5000)][1:250],lwd=2)
+# axis(1,at = seq(0.05,0.95,0.1)*length(Fsum_frac[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
+# axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
+# abline(v=seq(0,50000,5000),lty=2,col="grey50")
+# mtext(1,line=3,text = "log10 (mu)",cex=1.25)
+# axis(2,at = c(-4,-3,-2,-1),labels = c(-4,-3,-2,-1),las=2)
+# mtext(1,text =  bquote("Scaled Initiation ("*kappa/tau*")"),font=2,line=1.5,cex=1,xpd=T)
+# legend("bottomright",lty = 1:5,legend = c("52 (~99%)","7    (~50%)","2   (~1%)","1   (sim)"), title = "Half-life (min.)",xjust = 1,lwd=2)
+# box()
+# dev.off()
 
 
 df.prod <- df*cbind(Fsum_frac[[1]],Fsum_frac[[2]],Fsum_frac[[3]],Fsum_frac[[4]],Fsum_frac[[5]])
@@ -1459,17 +1569,21 @@ dev.off()
 ```{r Duc and Song model results, echo=F}
 #Yeast work from ENSEMBL, Presnyak, Weinberg and Duc
 #Weinberg RPKM
-Weinberg_mRNA_RPKM <- fread("../Data/GSE75897_RiboZero_RPKMs.txt",sep="\t",stringsAsFactors = F,header = F)
+Weinberg_mRNA_RPKM <- fread("../../Data/GSE75897_RiboZero_RPKMs.txt",sep="\t",stringsAsFactors = F,header = F)
 setkey(Weinberg_mRNA_RPKM,"V1")
+
+Weinberg_RPF_RPKM <- fread("../../Data/GSE75897_RPF_RPKMs.txt",sep="\t",stringsAsFactors = F,header = F)
+setkey(Weinberg_RPF_RPKM,"V1")
+
 
 #Sc length
 library(Biostrings)
 
-sc.proteins <- Biostrings::readAAStringSet("../Data/yeast_proteins.FASTA")
+sc.proteins <- Biostrings::readAAStringSet("../../Data/yeast_proteins.FASTA")
 
 
 #Half lives from Presnyak_2015
-Presnyak_2015 <- fread("../Data/SC_halflives_Presnyak_2015.txt")
+Presnyak_2015 <- fread("../../Data/SC_halflives_Presnyak_2015.txt")
 
 #Read in intiation rates from Duc 2018
 Duc_Initiation <- fread("../../Data/Duc2018/Initiation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=T)
@@ -1477,7 +1591,7 @@ Duc_Initiation <- fread("../../Data/Duc2018/Initiation_rates_DUC.txt", sep = "\t
 #Read in elongation rates from Duc 2018
 Duc_Elongation <- fread("../../Data/Duc2018/Elongation_rates_DUC.txt", sep = "\t", stringsAsFactors = F,header=F)
 
-View(Duc_Elongation)
+#View(Duc_Elongation)
 
 Duc_Genes <- Duc_Elongation[seq(1,nrow(Duc_Elongation),7),1]
 Duc_Sequence <- Duc_Elongation[seq(2,nrow(Duc_Elongation),7),]
@@ -1495,7 +1609,7 @@ min_elongation_inferred <- apply(Duc_Infered,1,function(i) mean(as.numeric(unlis
 names(Arith_mean_inferred) <- unlist(Duc_Genes)
 
 
-Arith_mean_inferred
+#Arith_mean_inferred
 Duc.DT <- cbind(Duc_Initiation[,c(1,3)],Arith_mean_inferred)
 setkeyv(Duc.DT,"ORF")
 
@@ -1511,6 +1625,11 @@ names(sc.proteins_Duc) <- sc.names[which(sc.names%in%unlist(Duc.DT[unlist(Presny
 
 Weinberg_mRNA_RPKM_Duc <- Weinberg_mRNA_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),]
 
+Weinberg_RPF_RPKM_Duc <- Weinberg_RPF_RPKM[unlist(Duc.DT[unlist(Presnyak_2015_Duc[,1]),1]),]
+
+TE <- Weinberg_RPF_RPKM_Duc
+TE[,"TE":=Weinberg_RPF_RPKM_Duc[,2]/Weinberg_mRNA_RPKM_Duc[,2]] 
+setkeyv(TE,"V1")
 
 imax_duc <- floor(sc.proteins_Duc/9)
 
@@ -1522,6 +1641,7 @@ plot1.params.Duc[,"Genes":=marking_rate_Presnyak[,2]]
 setkey(plot1.params.Duc,"Genes")
 plot1.params.Duc[names(imax_duc),"imax":=imax_duc]
 plot1.params.Duc[,"RPKM":=Weinberg_mRNA_RPKM_Duc[,2]]
+TE <- TE[names(imax_duc),][which(is.na(plot1.params.Duc[,imax])==F),]
 plot1.params.Duc <- plot1.params.Duc[which(is.na(imax)==F),]
 plot1.params.Duc[,-8]
 
@@ -1544,14 +1664,19 @@ M_sd_imax_range_plot1_Duc_int <- lapply(Marked_imax_range_plot1_Duc_int,Ribo_sd)
 Full_imax_range_plot1_Duc_int <- apply(plot1.params.Duc[,-8],1,function(i) Classes(parameters = i,imax = as.numeric(unlist(i[8])),rescale = F,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
 
 F_pct_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_percent)
-F_mean_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_mean)
+p_capped <- unlist(lapply(Unmarked_imax_range_plot1_Duc_int,sum))/unlist(lapply(Full_imax_range_plot1_Duc_int,sum))
+p_decapped <- unlist(lapply(Marked_imax_range_plot1_Duc_int,sum))/unlist(lapply(Full_imax_range_plot1_Duc_int,sum))
+F_mean_imax_range_plot1_Duc_int <- p_decapped*unlist(M_mean_imax_range_plot1_Duc_int) + p_capped*unlist(U_mean_imax_range_plot1_Duc_int)
+F_mean_imax_range_plot1_Duc_int2 <- lapply(Full_imax_range_plot1_Duc_int,Ribo_mean)
 F_mode_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_mode)
 F_sd_imax_range_plot1_Duc_int <- lapply(Full_imax_range_plot1_Duc_int,Ribo_sd)
+
+View(cbind(F_mean_imax_range_plot1_Duc_int,F_mean_imax_range_plot1_Duc_int2))
 
 
 F_sum_Duc <- unlist(lapply(Full_imax_range_plot1_Duc_int,sum))
 
-F_sum_Duc
+#F_sum_Duc
 median(unlist(Weinberg_mRNA_RPKM_Duc[,2])) # is between two values 
 
 #gene 521 is 209.27 and was chosen
@@ -1602,6 +1727,60 @@ plot(unlist(Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2]),F_mean_imax_rang
 
 
 plot(unlist(Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2])/min(unlist(Duc_Initiation[unlist(plot1.params.Duc[,Genes]),2])),F_mean_imax_range_plot1_Duc_int)
+
+unlist(TE[,3])*unlist(plot1.params.Duc[,imax]*27/200)
+
+
+
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("Duc_Song_vs_model.png",width = 5,height = 5,units = "in",res = 300)
+setkeyv(TE,"V1")
+plot(unlist(F_mean_imax_range_plot1_Duc_int),unlist(TE[,3])*unlist(plot1.params.Duc[,imax]*27/200),xlab="",ylab="",axes=T,pch=20)
+abline(a=c(0,1),col="black",lwd=2)
+mtext(2,line=2.25,text = "Observed Mean Ribosomal Load",font=2,cex=1.25)
+mtext(1,line=2.25,text = "Predicted Mean Ribosomal Load",font=2,cex=1.25)
+box()
+dev.off()
+setwd(old.dir)
+
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+png("Duc_Song_vs_model_log.png",width = 5,height = 5,units = "in",res = 300)
+setkeyv(TE,"V1")
+plot(log(unlist(F_mean_imax_range_plot1_Duc_int),10),log(unlist(TE[,3])*unlist(plot1.params.Duc[,imax]*27/200),10),xlab="",ylab="",axes=T,pch=20)
+#abline(a=c(0,1),col="black",lwd=2)
+mtext(2,line=2.25,text = bquote(log[10]*"[Observed Mean Ribosomal Load]"),font=2,cex=1.25)
+mtext(1,line=2.25,text = bquote(log[10]*"[Predicted Mean Ribosomal Load]"),font=2,cex=1.25)
+ct <- cor.test(log(unlist(F_mean_imax_range_plot1_Duc_int),10),log(unlist(TE[,3])*unlist(plot1.params.Duc[,imax]*27/200)))
+text(x = 0.15,y =1.6,labels = bquote(rho*"="*.(ct$estimate)),font=2,cex=1.25)
+box()
+dev.off()
+setwd(old.dir)
+
+
+old.dir <- getwd()
+Check_dir("../Results/",add=T)
+setwd(paste(old.dir,"../Results/",gsub(Sys.Date(),pattern = "-",replacement = ""),sep="/"))
+
+ct <- cor.test(log(unlist(F_mean_imax_range_plot1_Duc_int),10),log(unlist(TE[,3])*unlist(plot1.params.Duc[,imax]*27/200),10),method="spearman")
+
+
+png("Duc_Song_vs_model_log_same_axes.png",width = 5,height = 5,units = "in",res = 300)
+setkeyv(TE,"V1")
+plot(log(unlist(F_mean_imax_range_plot1_Duc_int),10),log(unlist(TE[,3])*unlist(plot1.params.Duc[,imax]*27/200),10),xlab="",ylab="",axes=T,pch=20,xlim=c(0,1.8),ylim=c(0,1.8))
+#abline(a=c(0,1),col="black",lwd=2)
+mtext(2,line=2.25,text = bquote(log[10]*"[Observed Mean Ribosomal Load]"),font=2,cex=1.25)
+mtext(1,line=2.25,text = bquote(log[10]*"[Predicted Mean Ribosomal Load]"),font=2,cex=1.25)
+text()
+box()
+dev.off()
+setwd(old.dir)
+
+
+
 
 
 
