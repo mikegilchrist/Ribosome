@@ -433,9 +433,9 @@ Ribo_mean <- function(Data){
 Ribo_sd <- function(Data){
   if(is.null(dim(Data))&length(unlist(Data))>1){
     mean <- Ribo_mean(Data)
-    square.diff <- ((0:(length(Data)-1))-as.vector(mean.tmp))^2
+    square.diff <- ((0:(length(Data)-1))-as.vector(mean))^2
     data.pct <- Data/sum(Data)
-    var <- t(data.pct)%*%square.diff.tmp
+    var <- t(data.pct)%*%square.diff
   }else{
     Data_pct <- apply(Data,2,function(i) i/sum(i))
     mean <- Ribo_mean(Data)

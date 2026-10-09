@@ -22,12 +22,11 @@ test_that("Ribo_mode: returns class index (0-based)", {
 test_that("Ribo_sd: matrix branch", {
   expect_equal(as.numeric(Ribo_sd(M)), c(1, 1))
 })
-test_that("Ribo_sd: vector branch", {
-  skip("KNOWN FAILURE (KNOWN_FAILURES.md #3): vector branch references undefined mean.tmp / square.diff.tmp")
+test_that("Ribo_sd: vector branch (fixed in Part C.5, KNOWN_FAILURES.md #3)", {
   expect_equal(as.numeric(Ribo_sd(x)), 1)
-})
-test_that("Ribo_sd vector branch currently errors with 'mean.tmp' not found (bookkeeping the negative)", {
-  expect_error(Ribo_sd(x), "mean.tmp")
+  expect_equal(as.numeric(Ribo_sd(rev(x))), 1)
+  # vector and one-column matrix input agree
+  expect_equal(as.numeric(Ribo_sd(x)), as.numeric(Ribo_sd(cbind(x))))
 })
 test_that("Ribo_frac and Ribo_frac_load", {
   expect_equal(Ribo_frac(M, 2 * M), c(.5, .5))
