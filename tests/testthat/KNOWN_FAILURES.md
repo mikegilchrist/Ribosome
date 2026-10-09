@@ -8,6 +8,9 @@ which.interfere settings, compared with the base-R oracle
 (Claude.Code_2026-10-09_reference.solver_check.share.R).
 
 ## 1. _newtau set: AGREES (no failure; recorded because the brief asked)
+- RESOLVED 2026-10-09, Part C.3: the _newtau set was deleted from
+  R/Polysome_functions_RAUC.R on the strength of the numbers below, and its
+  two tests were removed with it.
 - CalcUnmarkedClass_newtau / CalcMarkedClass_newtau / Classes_newtau equal the
   first set and the oracle. Max abs diff 2.1e-10, max rel diff 1.1e-13 over
   the grid (abs diff is large only where values are ~4e3 = 1/mu).

@@ -1,43 +1,12 @@
 # A.5 equivalence between the duplicate solver sets.
 # Result (measured, see KNOWN_FAILURES.md):
-#  * _newtau set  : AGREES with the first set / reference (max rel diff ~1e-14).
-#                   It is textually identical apart from print() calls, and
-#                   CalcMarkedClass_newtau falls back to CalcUnmarkedClass.
+#  * _newtau set  : AGREED with the first set / reference (max rel diff ~1e-13)
+#                   at 03be8d5; removed from the package in Part C.3, so its
+#                   tests were removed with it (see KNOWN_FAILURES.md #1).
 #  * *NP set      : does NOT agree at the same input vector, because it uses
 #                   tau_i = i (rescaled) instead of tau*i/(9*imax). It DOES equal
 #                   the first set (kappa+tau interference) evaluated at
 #                   tau_first = 9*imax*tau_NP; that relation is tested below.
-
-test_that("_newtau set equals first set and reference (both interference settings, 3 imax)", {
-  g <- make_grid()
-  rows <- c(1, 25, 26, 100, 149, 250)
-  for (nm in names(INTERFERE_SETS)) for (im in IMAX_SET) {
-    wi <- INTERFERE_SETS[[nm]]
-    for (r in rows) {
-      p <- par_vec(g[r, ]); ref <- ref_for(g[r, ], im, wi)
-      capture.output({
-        nu <- CalcUnmarkedClass_newtau(p, im, which.interfere = wi)
-        nm_ <- CalcMarkedClass_newtau(p, im, which.interfere = wi)
-        nm2 <- CalcMarkedClass_newtau(p, im, unmarked = nu, which.interfere = wi)
-        nc <- Classes_newtau(p, im, which.interfere = wi)
-      })
-      # outputs carry parameter names as attributes in some paths; compare values
-      nu <- as.numeric(nu); nm_ <- as.numeric(nm_); nm2 <- as.numeric(nm2); nc <- as.numeric(nc)
-      expect_equal(nu, as.numeric(CalcUnmarkedClass(p, im, which.interfere = wi)), tolerance = 1e-10)
-      expect_equal(nm_, as.numeric(CalcMarkedClass(p, im, which.interfere = wi)), tolerance = 1e-10)
-      expect_equal(nm2, nm_, tolerance = 1e-10)
-      expect_equal(nc, as.numeric(Classes(p, im, which.interfere = wi)), tolerance = 1e-10)
-      expect_equal(nu, ref$m, tolerance = 1e-8)
-      expect_equal(nm_, ref$mstar, tolerance = 1e-8)
-    }
-  }
-})
-
-test_that("_newtau functions print to stdout (debug calls still present)", {
-  p <- par_vec(make_grid()[100, ])
-  out <- capture.output(CalcUnmarkedClass_newtau(p, 4))
-  expect_gt(length(out), 0)
-})
 
 test_that("NP set equals first set at tau_first = 9*imax*tau_NP (kappa+tau interference)", {
   g <- make_grid()
