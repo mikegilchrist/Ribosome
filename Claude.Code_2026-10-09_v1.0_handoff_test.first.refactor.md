@@ -12,9 +12,11 @@ context.
 
 ## 0. Where things are
 
-- Code: `~/Repositories/Ribosome`, clone of the private GitHub repo
-  `rurquidi/Ribosome`, commit f70c00a (2023-07-25, 11 commits). MG has
-  read access; do not push to it without asking.
+- Code: `~/Repositories/Ribosome`. Remotes: `origin` is MG's fork
+  `mikegilchrist/Ribosome`, `upstream` is Ricardo's public
+  `rurquidi/Ribosome`, commit f70c00a (2023-07-25, 11 commits). Work on
+  branches and push to `origin`; pull requests to `upstream` only with
+  MG's say-so.
 - Review that motivates this work:
   `~/Repositories/polysomeModel/Claude.Code_2026-10-09_v1.1_simulated.editorial.review.md`,
   Section 9 (code verification) and items 3.2 to 3.4.
@@ -222,8 +224,9 @@ pass before and after. Suggested order:
 
 ## 6. Constraints
 
-- Private repo belonging to Ricardo: work on a branch, do not push
-  without MG's say-so, and do not force anything.
+- Ricardo's repo is `upstream`: work on a branch, push to MG's fork
+  (`origin`), and open pull requests to `upstream` only with MG's
+  say-so. Never force-push either remote.
 - ASCII only in files. Naming: `Claude.Code_<date>_v<ver>_<topic>.md`
   for session-authored documents.
 - Keep large outputs out of context: redirect test runs and file
