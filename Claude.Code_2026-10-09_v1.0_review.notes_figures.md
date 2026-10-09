@@ -49,9 +49,19 @@ manuscript. Evidence and line numbers: `Claude.Code_2026-10-09_v1.0_code.map.md`
     list are identical (0.0038508177). Possibly a copy error for a missing
     quantile.
 
+11. **Which dimensionless decapping rate to present.** The code already
+    solves in dimensionless form (`rescale = T, rescale.val = "tau"`, used
+    by every model figure). Open for the paper: express decapping as
+    mu/tau, or as 9*mu*imax/tau (decapping rate times the time a ribosome
+    takes to cross the transcript), which is the group that sets the
+    decapped share of protein output (Part A identity). The choice changes
+    how figures comparing imax values read. Handoff step C.6 (a separate
+    dimensionless solver) was dropped on 2026-10-09 as redundant with the
+    `rescale` option (MG).
+
 ## 4. Minor labelling (non-paper plots unless noted)
 
-11. "log2 Scaled Initiation" axis on log10 data (Rmd L1253, 1264, 1276,
+12. "log2 Scaled Initiation" axis on log10 data (Rmd L1253, 1264, 1276,
     1287); legend line types not matching plotted lines (L1284-1289,
     L1366-1369); quantile lines at 0.015/0.475/0.989 labelled 1/50/99%
     (`Parameter histograms.R` L132, 147). Relevant to the paper only if the
