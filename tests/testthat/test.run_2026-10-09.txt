@@ -1,0 +1,13 @@
+SKIP: 'test-equivalence.R:56:3' -------------------
+Reason: KNOWN FAILURE (KNOWN_FAILURES.md #2): NP uses tau_i=i, not tau*i/(9*imax); differs from reference by orders of magnitude
+
+SKIP: 'test-equivalence.R:63:3' -------------------
+Reason: KNOWN FAILURE (KNOWN_FAILURES.md #2): same cause as NP-vs-reference
+
+SKIP: 'test-steady-state-check.R:8:3' -------------
+Reason: KNOWN FAILURE (KNOWN_FAILURES.md #4): CHECK_STEADY_STATE assumes tau_i=i, not tau*i/(9*imax)
+
+SKIP: 'test-summary-stats.R:26:3' -----------------
+Reason: KNOWN FAILURE (KNOWN_FAILURES.md #3): vector branch references undefined mean.tmp / square.diff.tmp
+
+[ FAIL 0 | WARN 0 | SKIP 4 | PASS 7866 ]
