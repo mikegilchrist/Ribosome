@@ -7,3 +7,4 @@
 ^Text$
 ^[^/]*\.png$
 ^tests/testthat/test\.run_.*\.txt$
+^retired$
