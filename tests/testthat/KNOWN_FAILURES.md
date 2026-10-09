@@ -34,6 +34,9 @@ which.interfere settings, compared with the base-R oracle
   POSITION (parameters[1..5]), not by name, and take no which.interfere.
 
 ## 3. Ribo_sd vector branch errors
+- RESOLVED 2026-10-09, Part C.5: the two names were corrected to the
+  variables the branch assigns; the skip and the error-pinning test were
+  replaced by value tests (sd = 1 on the toy input, vector == 1-column matrix).
 - Test skipped: test-summary-stats.R "Ribo_sd: vector branch".
 - Why: it references mean.tmp and square.diff.tmp, never defined there
   (it assigns `mean` and `square.diff`). Evidence: Ribo_sd(c(1,2,3,4)) ->
