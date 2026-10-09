@@ -1,15 +1,20 @@
 # helper-params.R -- shared setup for the Ribosome characterisation suite.
-# Sources the solver files WITHOUT modifying them. testthat sets the working
-# directory to tests/testthat, so paths are relative to that.
+# Two ways to run:
+#  * from the repo root: Rscript -e 'testthat::test_dir("tests/testthat")'
+#    -> sources R/Polysome_functions_RAUC.R directly (no install needed);
+#  * under R CMD check / testthat::test_check("Ribosome") -> the installed
+#    package supplies the functions, and the repo-only oracle file is absent,
+#    so the one test that needs it skips (test-reference.R).
+# testthat sets the working directory to tests/testthat.
 suppressPackageStartupMessages({
   library(limSolve)
   library(data.table)
 })
 
-.repo_R <- normalizePath(file.path("..", "..", "R"), mustWork = TRUE)
-.repo   <- normalizePath(file.path("..", ".."), mustWork = TRUE)
+.repo    <- normalizePath(file.path("..", ".."), mustWork = FALSE)
+.in_repo <- file.exists(file.path(.repo, "R", "Polysome_functions_RAUC.R"))
 
-source(file.path(.repo_R, "Polysome_functions_RAUC.R"), local = FALSE)
+if (.in_repo) source(file.path(.repo, "R", "Polysome_functions_RAUC.R"), local = FALSE)
 
 # Pull only named function definitions out of a file that has side effects
 # when sourced whole (samples.R builds a 14641-row grid and runs solvers).
@@ -27,11 +32,13 @@ source(file.path(.repo_R, "Polysome_functions_RAUC.R"), local = FALSE)
   if (length(missing)) stop("not found in ", file, ": ", paste(missing, collapse = ", "))
   invisible(got)
 }
-.extract_functions(file.path(.repo, "inst", "scripts", "samples.R"),
-                   c("CalcUnmarkedClassNP", "CalcMarkedClassNP", "ClassesNP"))
+.samples_R <- if (.in_repo) file.path(.repo, "inst", "scripts", "samples.R") else
+  system.file("scripts", "samples.R", package = "Ribosome", mustWork = TRUE)
+.extract_functions(.samples_R, c("CalcUnmarkedClassNP", "CalcMarkedClassNP", "ClassesNP"))
 # The oracle file guards its demo with sys.nframe()==0; extract the function only.
-.extract_functions(file.path(.repo, "Claude.Code_2026-10-09_reference.solver_check.share.R"),
-                   "solve_model")
+# It lives at the repo root and is excluded from the built package.
+.oracle_R <- file.path(.repo, "Claude.Code_2026-10-09_reference.solver_check.share.R")
+if (file.exists(.oracle_R)) .extract_functions(.oracle_R, "solve_model")
 
 # ---- canonical parameter sets (brief A.2) -------------------------------
 IMAX_SET   <- c(4, 39, 194)
