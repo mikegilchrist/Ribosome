@@ -1,2 +1,9 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
+^claude$
+^\.claude$
+^CLAUDE\.md$
+^Claude\.Code_.*$
+^Text$
+^[^/]*\.png$
+^tests/testthat/test\.run_.*\.txt$

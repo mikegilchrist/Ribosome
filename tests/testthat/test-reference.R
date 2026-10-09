@@ -2,6 +2,8 @@
 # that the helper's generalised reference reduces to the oracle itself.
 
 test_that("helper ref_solve (kappa interference) equals the oracle solve_model", {
+  skip_if_not(exists("solve_model"),
+              "oracle file is repo-only (not in the built package); run from the repo root")
   for (r in c(1, 77, 250)) {
     row <- make_grid()[r, ]
     a <- solve_model(row$kappa, row$mu, row$tau, 39)

@@ -1,5 +1,3 @@
-library(limSolve)
-library(data.table)
 
 
 # Model Solutions ---------------------------------------------------------
@@ -74,7 +72,7 @@ CalcUnmarkedClass <- function(parameters,imax,rescale = F ,rescale.val = "tau",
   lower <- kappa[-(imax+1)]
   main <- -1*(kappa+tau+mu)
   B <-  c(-lambda,rep(0,imax))
-  Inv <- Solve.tridiag(diam1 = lower,dia = main,diap1 = upper,B = B)
+  Inv <- limSolve::Solve.tridiag(diam1 = lower,dia = main,diap1 = upper,B = B)
 
   return(Inv)
 }

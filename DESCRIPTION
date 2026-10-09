@@ -1,13 +1,24 @@
 Package: Ribosome
-Type: Ribosome
-Title: ODE Modeling of Ribosome Populations
+Type: Package
+Title: Steady-State Polysome Distributions of Capped and Decapped mRNA
 Version: 0.1.0
 Author: Nate Pollesch, Ricardo Urquidi Camacho, Ben Ernest, Michael Gilchrist
-Maintainer: Ricardo Urquidi Camacho (rurquidi@vols.utk.edu)
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Maintainer: Ricardo Urquidi Camacho <rurquidi@vols.utk.edu>
+Description: Computes the steady-state distribution of mRNA across polysome
+    classes (number of bound ribosomes, 0 to imax) for a model in which
+    transcripts are produced capped at rate lambda, gain ribosomes by
+    initiation (kappa) and lose them by elongation and termination (tau), are
+    decapped at rate mu, and are degraded from the ribosome-free decapped
+    class at rate delta. Initiation and termination can depend on ribosome
+    density. Includes summary statistics (class probabilities, mean, standard
+    deviation and mode of ribosome load). Supports the manuscript figures in
+    'Text/Paper final figures.Rmd' of the source repository.
 License: What license is it under?
 Encoding: UTF-8
-LazyData: true
-Suggests: 
-    testthat
+Imports:
+    limSolve,
+    graphics,
+    grDevices
+Suggests:
+    testthat,
+    data.table
