@@ -27,7 +27,7 @@ source(file.path(.repo_R, "Polysome_functions_RAUC.R"), local = FALSE)
   if (length(missing)) stop("not found in ", file, ": ", paste(missing, collapse = ", "))
   invisible(got)
 }
-.extract_functions(file.path(.repo_R, "samples.R"),
+.extract_functions(file.path(.repo, "inst", "scripts", "samples.R"),
                    c("CalcUnmarkedClassNP", "CalcMarkedClassNP", "ClassesNP"))
 # The oracle file guards its demo with sys.nframe()==0; extract the function only.
 .extract_functions(file.path(.repo, "Claude.Code_2026-10-09_reference.solver_check.share.R"),
