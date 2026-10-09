@@ -1,8 +1,9 @@
-# CHECK_STEADY_STATE (line 158) was examined as a possible reusable residual
+# CHECK_STEADY_STATE (retired to retired/legacy_helpers.R in Part C) was examined as a possible reusable residual
 # test (brief A.4). Findings (KNOWN_FAILURES.md #4, #5):
 #  - it uses tau_i = i (the NP convention), so it FAILS on first-set output;
 #  - its `return` sits inside the for loop, so only class 0 is ever checked.
 p <- par_vec(make_grid()[100, ])
+skip_if_no_retired()
 
 test_that("CHECK_STEADY_STATE on first-set output (should pass; does not)", {
   skip("KNOWN FAILURE (KNOWN_FAILURES.md #4): CHECK_STEADY_STATE assumes tau_i=i, not tau*i/(9*imax)")

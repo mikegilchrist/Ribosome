@@ -32,9 +32,18 @@ if (.in_repo) source(file.path(.repo, "R", "Polysome_functions_RAUC.R"), local =
   if (length(missing)) stop("not found in ", file, ": ", paste(missing, collapse = ", "))
   invisible(got)
 }
-.samples_R <- if (.in_repo) file.path(.repo, "inst", "scripts", "samples.R") else
-  system.file("scripts", "samples.R", package = "Ribosome", mustWork = TRUE)
-.extract_functions(.samples_R, c("CalcUnmarkedClassNP", "CalcMarkedClassNP", "ClassesNP"))
+# Retired code (repo-only, excluded from the built package): the *NP solvers
+# from retired/samples.R and CHECK_STEADY_STATE from retired/legacy_helpers.R.
+# Tests that need them call skip_if_no_retired().
+.retired <- file.path(.repo, "retired")
+if (dir.exists(.retired)) {
+  .extract_functions(file.path(.retired, "samples.R"),
+                     c("CalcUnmarkedClassNP", "CalcMarkedClassNP", "ClassesNP"))
+  .extract_functions(file.path(.retired, "legacy_helpers.R"), "CHECK_STEADY_STATE")
+}
+skip_if_no_retired <- function()
+  testthat::skip_if_not(exists("CalcUnmarkedClassNP") && exists("CHECK_STEADY_STATE"),
+                        "retired/ code is repo-only (not in the built package); run from the repo root")
 # The oracle file guards its demo with sys.nframe()==0; extract the function only.
 # It lives at the repo root and is excluded from the built package.
 .oracle_R <- file.path(.repo, "Claude.Code_2026-10-09_reference.solver_check.share.R")

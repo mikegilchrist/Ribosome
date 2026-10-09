@@ -9,6 +9,7 @@
 #                   tau_first = 9*imax*tau_NP; that relation is tested below.
 
 test_that("NP set equals first set at tau_first = 9*imax*tau_NP (kappa+tau interference)", {
+  skip_if_no_retired()
   g <- make_grid()
   for (im in IMAX_SET) for (r in c(1, 100, 250)) {
     p <- par_vec(g[r, ]); p2 <- p; p2["tau"] <- 9 * im * p["tau"]

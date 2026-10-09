@@ -11,17 +11,18 @@ R CMD check rejects spaces in file names; the map uses the old names.
 The manuscript figures come from `Text/Paper final figures.Rmd`, which uses
 only `R/Polysome_functions_RAUC.R`. None of these scripts produce a
 manuscript figure, with two possible exceptions noted in the map (Fig 2
-panels from `Parameter_histograms.R`, `Manuscript_Figures.R` and
-`scaled_initiation_histogram.R`).
+panels from `Parameter_histograms.R` and `scaled_initiation_histogram.R`;
+the Arabidopsis Fig 2 panels came from `Manuscript_Figures.R`, now in
+`retired/`).
+
+Three superseded scripts (`Manuscript_Figures.R`, `Model_Figures.R`,
+`samples.R`) moved on to `retired/` later the same day; see its README.
 
 | File | What it is |
 |---|---|
-| `Manuscript_Figures.R` | Earlier version of the figure Rmd; mostly superseded |
-| `Model_Figures.R` | Older exploratory model figures |
 | `Parameter_histograms.R` | Yeast parameter histograms from data (Fig 2 candidates) |
 | `scaled_initiation_histogram.R` | Duc et al. 2018 scaled initiation histogram (Fig 2E candidate) |
 | `Continuous_approximation.R` | Continuum BVP and ODE checks; not used by the paper |
-| `samples.R` | `*NP` solver variants (redundant with the main solver; see tests) and simulations |
 | `Reanalysis_20200914.R` | Arabidopsis microarray QC; unrelated to this manuscript |
 
 Paths inside the scripts are relative to the working directory they were
