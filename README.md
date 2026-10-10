@@ -9,9 +9,11 @@ The model gives the steady-state distribution of mRNA over polysome classes
 at rate lambda, gains ribosomes by initiation (kappa), loses them by
 elongation and termination (tau, elongation rate in codons per second), and is
 decapped at rate mu. Decapped (marked) mRNA keeps the ribosomes it had and is
-degraded from the ribosome-free class at rate delta. Initiation and termination
-can depend on ribosome density (DII, DDI); the capped distribution comes from a
-tridiagonal linear solve and the decapped one from tail sums of the capped one.
+degraded from the ribosome-free class at rate delta. Termination scales with the
+number of ribosomes; initiation is either density independent (DII,
+`which.interfere = "tau"`) or density dependent (DDI, the default). The capped
+distribution comes from a tridiagonal linear solve and the decapped one from
+cumulative sums of the capped one.
 
 ## Install
 
@@ -34,7 +36,7 @@ From the repo root:
     Rscript -e 'testthat::test_dir("tests/testthat")'
 
 `R CMD check` also runs them; tests that need repo-only files (the retired
-scripts) are skipped, with the reason stated, when run from the installed
+scripts and the reference solver) are skipped, with the reason stated, when run from the installed
 package. See `tests/testthat/KNOWN_FAILURES.md` for known defects the tests
 document.
 

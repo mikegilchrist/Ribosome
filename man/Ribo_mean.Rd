@@ -7,16 +7,15 @@
 Ribo_mean(Data)
 }
 \arguments{
-\item{Data}{A numeric vector (one distribution) or a matrix with polysome
-classes 0 to \code{imax} in rows and one distribution per column. A
-one-column matrix is treated as a matrix.}
+\item{Data}{A numeric vector of length > 1, or a matrix with classes 0 to
+\code{imax} in rows and one distribution per column.}
 }
 \value{
 A one-column matrix with one row per column of \code{Data} (1 x 1 for a
 vector).
 }
 \description{
-Mean of the class index (0 to \code{imax}) under the normalised distribution.
+\code{sum(i * p_i)} over classes 0 to \code{imax}, for each distribution.
 }
 \examples{
 Ribo_mean(c(2, 1, 1))

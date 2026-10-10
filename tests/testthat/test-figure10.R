@@ -2,9 +2,8 @@
 # 40001:45000, 20001:25000 -> mu 2.2216e-4, 3.3007e-4, 2.3105e-3), imax=39,
 # tau=lambda=1, delta=1e5, which.interfere=c("kappa","tau").
 # Protein production = colSums(classes) * Ribo_mean(classes) (Rmd convention).
-# Production rises monotonically in kappa, so the peak is at kappa_max = 0.5,
-# which IS on the 25-point grid (last point); the 25-point grid therefore hits
-# the peak exactly and no finer grid is needed.
+# Production rises monotonically in kappa, so the peak is at kappa = 0.5, the
+# last point of the 25-point grid; no finer grid is needed.
 fig10_mu <- c(0.0002221626, 0.0003300701, 0.0023104906)
 
 test_that("Fig 10 normalised peaks 1.000, 0.692, 0.143 and decapped shares 0.072, 0.104, 0.448", {

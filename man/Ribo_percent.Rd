@@ -7,16 +7,15 @@
 Ribo_percent(Data)
 }
 \arguments{
-\item{Data}{A numeric vector (one distribution) or a matrix with polysome
-classes 0 to \code{imax} in rows and one distribution per column. A
-one-column matrix is treated as a matrix.}
+\item{Data}{A numeric vector of length > 1, or a matrix with classes 0 to
+\code{imax} in rows and one distribution per column.}
 }
 \value{
-For a vector, a vector of the same length; for a matrix, a matrix
-of the same shape with each column summing to one.
+An object of the same shape as \code{Data}, each column (or the
+vector) summing to one.
 }
 \description{
-Normalises a distribution over polysome classes so it sums to one.
+Normalises a distribution over polysome classes to sum to one.
 }
 \examples{
 Ribo_percent(c(2, 1, 1))

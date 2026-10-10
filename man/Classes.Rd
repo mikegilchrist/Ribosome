@@ -17,50 +17,47 @@ Classes(
 )
 }
 \arguments{
-\item{parameters}{Numeric vector of model parameters in the order
-\verb{kappa, mu, lambda, tau, delta, s2}: kappa is the initiation rate, mu the
-decapping rate, lambda the rate at which capped mRNA is produced, tau the
-elongation rate in codons per second, delta the degradation rate of
-ribosome-free decapped mRNA, and s2 is unused. If the vector has no names,
-\code{par.names} is assigned as its names; the code looks values up by name.}
+\item{parameters}{Numeric vector \code{c(kappa, mu, lambda, tau, delta, s2)}:
+kappa the translation initiation rate (kappa_0 in the paper), mu the
+decapping rate, lambda the production rate of capped mRNA into class 0,
+tau the elongation rate in codons per second (the paper's tau is
+tau / 9), delta the removal rate of decapped mRNA from class 0, s2
+unused. Values are looked up by name; an unnamed vector is given
+\code{par.names}.}
 
-\item{imax}{Integer, the maximum number of ribosomes (the highest polysome
-class). Classes run from 0 to \code{imax}; class \code{i} is at index \code{i + 1} of
-the result.}
+\item{imax}{Maximum number of ribosomes (the highest polysome class).
+Class \code{i} is at index \code{i + 1} of the result.}
 
-\item{unmarked}{Optional capped distribution from \code{\link[=CalcUnmarkedClass]{CalcUnmarkedClass()}}.}
+\item{unmarked}{Capped distribution from \code{\link[=CalcUnmarkedClass]{CalcUnmarkedClass()}}; if \code{NULL}
+(default) it is computed from the other arguments.}
 
-\item{marked}{Optional decapped distribution from \code{\link[=CalcMarkedClass]{CalcMarkedClass()}}.}
+\item{marked}{Decapped distribution from \code{\link[=CalcMarkedClass]{CalcMarkedClass()}}; if \code{NULL}
+(default) it is computed.}
 
-\item{rescale}{Logical. If \code{TRUE}, the rates are divided by
-\code{parameters[rescale.val]} before solving (the default \code{FALSE} leaves them
-unscaled).}
+\item{rescale}{Logical; if \code{TRUE}, the rates and lambda are divided by
+\code{parameters[rescale.val]}. This leaves the result unchanged up to
+rounding.}
 
-\item{rescale.val}{Name of the parameter used to rescale when
-\code{rescale = TRUE}; default \code{"tau"}.}
+\item{rescale.val}{Name of the parameter used by \code{rescale}.}
 
-\item{par.names}{Names assigned to \code{parameters} when it is unnamed.}
+\item{par.names}{Names given to an unnamed \code{parameters}.}
 
-\item{interference}{Logical. If \code{TRUE} (default), the rates named in
-\code{which.interfere} depend on the polysome class; if \code{FALSE}, initiation is
-\code{kappa} from classes \code{0} to \code{imax - 1} and termination from class \code{i >= 1}
-is \code{tau / (9 * imax)}, both independent of \code{i}.}
+\item{interference}{Logical; if \code{FALSE}, \code{which.interfere} is ignored,
+initiation is \code{kappa} from classes 0 to \code{imax - 1} and termination is
+\code{tau / (9 * imax)} from classes 1 to \code{imax}.}
 
-\item{which.interfere}{Character vector naming the rates that depend on the
-class when \code{interference = TRUE}; any of \code{"kappa"}, \code{"tau"}, \code{"mu"}.
-Default \code{c("kappa", "tau")}. With \code{"kappa"}, initiation from class \code{i}
-into class \code{i + 1} is \code{kappa * (1 - i / imax)}; with \code{"tau"}, termination
-from class \code{i} is \code{tau * i / (9 * imax)}; with \code{"mu"}, the decapping rate
-from class \code{i} is \code{mu * (1 - i / imax)}.}
+\item{which.interfere}{Rates that depend on class \code{i} when
+\code{interference = TRUE}: \code{"kappa"} makes initiation
+\code{kappa * (1 - i / imax)}, \code{"tau"} makes termination
+\code{tau * i / (9 * imax)}, \code{"mu"} makes decapping \code{mu * (1 - i / imax)}.
+Rates not named are as for \code{interference = FALSE}.}
 }
 \value{
-A matrix with \code{imax + 1} rows and one column (the sum of the
-capped matrix and the decapped vector); row \code{i + 1} is polysome class \code{i}.
+An \code{(imax + 1)} x 1 matrix; row \code{i + 1} is class \code{i}.
 }
 \description{
-Adds the decapped and capped steady-state distributions class by class.
-Either may be supplied to avoid recomputation; otherwise they are
-computed with \code{\link[=CalcUnmarkedClass]{CalcUnmarkedClass()}} and \code{\link[=CalcMarkedClass]{CalcMarkedClass()}}.
+Class-by-class sum of \code{\link[=CalcUnmarkedClass]{CalcUnmarkedClass()}} and \code{\link[=CalcMarkedClass]{CalcMarkedClass()}};
+either can be supplied to avoid recomputing it.
 }
 \examples{
 p <- c(kappa = 0.1, mu = 0.01, lambda = 1, tau = 1, delta = 1e5, s2 = 0)

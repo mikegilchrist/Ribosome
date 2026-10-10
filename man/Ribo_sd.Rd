@@ -7,16 +7,15 @@
 Ribo_sd(Data)
 }
 \arguments{
-\item{Data}{A numeric vector (one distribution) or a matrix with polysome
-classes 0 to \code{imax} in rows and one distribution per column. A
-one-column matrix is treated as a matrix.}
+\item{Data}{A numeric vector of length > 1, or a matrix with classes 0 to
+\code{imax} in rows and one distribution per column.}
 }
 \value{
 A numeric vector with one value per column of \code{Data} (a 1 x 1
-matrix for a vector input).
+matrix for a vector).
 }
 \description{
-Standard deviation of the class index under the normalised distribution.
+Standard deviation of the class index \code{i} for each distribution.
 }
 \examples{
 Ribo_sd(c(2, 1, 1))
