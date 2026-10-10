@@ -1,0 +1,36 @@
+diff --git a/R/Polysome_functions_RAUC.R b/R/Polysome_functions_RAUC.R
+index c25f73f..24b827c 100644
+--- a/R/Polysome_functions_RAUC.R
++++ b/R/Polysome_functions_RAUC.R
+@@ -203,7 +203,8 @@ CalcMarkedClass <- function(parameters,imax,unmarked=NULL,rescale = F, rescale.v
+       tau[i+1]
+     }
+   }
+-  marked <- vapply(0:imax,FUN.VALUE = n,FUN = function(i){mu[i+1]*sum(unmarked[(i+1):(n)])/gamma.func(i)})
++  # decapped class i receives the decapping flux from every capped class j >= i
++  marked <- vapply(0:imax,FUN.VALUE = n,FUN = function(i){sum(mu[(i+1):n]*unmarked[(i+1):n])/gamma.func(i)})
+   return(marked)
+ }
+ 
+diff --git a/tests/testthat/test-mu-interference.R b/tests/testthat/test-mu-interference.R
+new file mode 100644
+index 0000000..3527a41
+--- /dev/null
++++ b/tests/testthat/test-mu-interference.R
+@@ -0,0 +1,16 @@
++# Decapped steady state with density-dependent decapping ("mu" in
++# which.interfere): tau_i m*_i = sum_{j>=i} mu_j m_j (i >= 1) and
++# delta m*_0 = sum_j mu_j m_j. Fails before patch 01 (code used
++# mu_i * sum_{j>=i} m_j).
++test_that("CalcMarkedClass satisfies the decapped flux balance with mu interference", {
++  wi <- c("kappa", "tau", "mu")
++  for (im in IMAX_SET) for (r in c(1, 100, 250)) {
++    p <- par_vec(make_grid()[r, ])
++    U <- as.numeric(CalcUnmarkedClass(p, im, which.interfere = wi))
++    M <- as.numeric(CalcMarkedClass(p, im, which.interfere = wi))
++    i <- 0:im
++    mui <- p[["mu"]] * (1 - i / im); taui <- p[["tau"]] * i / (9 * im)
++    S <- rev(cumsum(rev(mui * U)))
++    expect_equal(M, c(S[1] / p[["delta"]], S[-1] / taui[-1]), tolerance = 1e-10)
++  }
++})

@@ -1,0 +1,22 @@
+diff --git a/R/Polysome_functions_RAUC.R b/R/Polysome_functions_RAUC.R
+index c25f73f..f756b18 100644
+--- a/R/Polysome_functions_RAUC.R
++++ b/R/Polysome_functions_RAUC.R
+@@ -31,7 +31,7 @@ CreateParMatrix <- function(parameter.range,fixed = NA,fixed.val=1,par.names=NA,
+     stop("Parameter range provided is not a list.")
+   }
+   if(length(parameter.range)==0){
+-    stop("Paramter range provided is empty.")
++    stop("Parameter range provided is empty.")
+   }
+ 
+   if(length(parameter.range)==1){
+@@ -42,7 +42,7 @@ CreateParMatrix <- function(parameter.range,fixed = NA,fixed.val=1,par.names=NA,
+       parameter.range <- c(parameter.range,rep(parameter.range,num.pars-1))
+       parameter.range[fixed] <- fixed.val
+     }else{
+-      parameter.range <- c(parameter.range,rep(parameter.range,num.pars=1))
++      parameter.range <- c(parameter.range,rep(parameter.range,num.pars-1))
+     }
+   }else if(length(parameter.range)!=length(par.names)){
+     stop("To specify different values for each parameter the number of items in the
