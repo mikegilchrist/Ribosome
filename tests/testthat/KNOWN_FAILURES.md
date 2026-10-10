@@ -1,8 +1,9 @@
 # KNOWN_FAILURES -- findings from Part A (2026-10-09, host obed, commit f70c00a code)
 
-Nothing under R/, Text/, DESCRIPTION or NAMESPACE was modified. Each entry is
-either a skipped test (the assertion that would fail on the original code) or
-a passing test that pins the observed behaviour. Evidence: the numbers below
+Part A modified nothing under R/, Text/, DESCRIPTION or NAMESPACE. Each entry
+was either a skipped test (the assertion that would fail on the original code)
+or a passing test that pins the observed behaviour; #1 and #3 were later
+resolved in Part C, as noted. Evidence: the numbers below
 come from the full 10 mu x 25 kappa grid, imax in {4, 39, 194}, both
 which.interfere settings, compared with the base-R oracle
 (Claude.Code_2026-10-09_reference.solver_check.share.R).
@@ -14,12 +15,11 @@ which.interfere settings, compared with the base-R oracle
 - CalcUnmarkedClass_newtau / CalcMarkedClass_newtau / Classes_newtau equal the
   first set and the oracle. Max abs diff 2.1e-10, max rel diff 1.1e-13 over
   the grid (abs diff is large only where values are ~4e3 = 1/mu).
-- They are textually identical to the first set apart from print(tau) and
-  print(kappa) in CalcUnmarkedClass_newtau (tested: output is non-empty).
-  CalcMarkedClass_newtau falls back to CalcUnmarkedClass (tests pass either way
-  because the two are identical). Safe-to-merge candidate per the numbers.
+- They were textually identical to the first set apart from print(tau) and
+  print(kappa) in CalcUnmarkedClass_newtau, and CalcMarkedClass_newtau fell
+  back to CalcUnmarkedClass (harmless, since the two were identical).
 
-## 2. *NP set (samples.R) DISAGREES with the first set and oracle at the same inputs
+## 2. *NP set (retired/samples.R) DISAGREES with the first set and oracle at the same inputs
 - Tests skipped: test-equivalence.R "NP set equals the reference at the SAME
   input vector" and "... first set at the SAME input vector".
 - Why: NP uses the rescaled convention tau_i = i, kappa/tau, mu/tau, so the
@@ -37,11 +37,10 @@ which.interfere settings, compared with the base-R oracle
 - RESOLVED 2026-10-09, Part C.5: the two names were corrected to the
   variables the branch assigns; the skip and the error-pinning test were
   replaced by value tests (sd = 1 on the toy input, vector == 1-column matrix).
-- Test skipped: test-summary-stats.R "Ribo_sd: vector branch".
-- Why: it references mean.tmp and square.diff.tmp, never defined there
+- Why: it referenced mean.tmp and square.diff.tmp, never defined there
   (it assigns `mean` and `square.diff`). Evidence: Ribo_sd(c(1,2,3,4)) ->
-  Error: object 'mean.tmp' not found. A passing test pins this error message.
-  The matrix branch is correct (hand-computed values match).
+  Error: object 'mean.tmp' not found. The matrix branch was already correct
+  (hand-computed values match).
 
 ## 4. CHECK_STEADY_STATE uses the wrong tau convention for the first-set solver
 - Test skipped: test-steady-state-check.R "CHECK_STEADY_STATE on first-set output".
@@ -54,8 +53,8 @@ which.interfere settings, compared with the base-R oracle
 
 ## 5. CHECK_STEADY_STATE only ever checks class 0
 - No skipped test; a passing test demonstrates it.
-- Why: the `return(...)` is inside the for loop (R/Polysome_functions_RAUC.R
-  ~lines 175-227), so the function exits after i == 1. Evidence: multiplying
+- Why: the `return(...)` is inside the for loop (retired/legacy_helpers.R,
+  lines 72-74), so the function exits after i == 1. Evidence: multiplying
   unmarked class 5 by 10 still returns c(0,0), and post=TRUE shows zeros for
   every class beyond 0.
 

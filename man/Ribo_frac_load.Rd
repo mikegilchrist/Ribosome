@@ -8,17 +8,16 @@ Ribo_frac_load(Fraction, Numerator, Denominator)
 }
 \arguments{
 \item{Fraction, Numerator, Denominator}{Numeric vectors (or one-column
-matrices) indexed by parameter set; the loop runs over
-\code{length(Denominator)}.}
+matrices), one value per parameter set.}
 }
 \value{
 A numeric vector of the same length as \code{Denominator}.
 }
 \description{
-Elementwise \code{Fraction * Numerator / Denominator}, for \code{Fraction},
-\code{Numerator} and \code{Denominator} given per parameter set (for example the
-output of \code{\link[=Ribo_frac]{Ribo_frac()}} and \code{\link[=Ribo_mean]{Ribo_mean()}}). Prints \code{length(Denominator)}
-as a side effect.
+Elementwise \code{Fraction * Numerator / Denominator}. The Rmd calls
+\code{Ribo_frac_load(Ribo_frac(M, F), Ribo_mean(M), Ribo_mean(F))}, which is
+the fraction of bound ribosomes that are on the mRNA in \code{M}. Prints
+\code{length(Denominator)}.
 }
 \examples{
 Ribo_frac_load(c(0.5, 0.25), c(2, 4), c(4, 4))

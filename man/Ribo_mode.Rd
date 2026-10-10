@@ -7,16 +7,15 @@
 Ribo_mode(Data)
 }
 \arguments{
-\item{Data}{A numeric vector (one distribution) or a matrix with polysome
-classes 0 to \code{imax} in rows and one distribution per column. A
-one-column matrix is treated as a matrix.}
+\item{Data}{A numeric vector of length > 1, or a matrix with classes 0 to
+\code{imax} in rows and one distribution per column.}
 }
 \value{
-The modal class index: one value per column of \code{Data} for a matrix.
+The modal class index, one per column of \code{Data} for a matrix. Tied
+classes are all returned, concatenated across columns.
 }
 \description{
-Class index (0 to \code{imax}) with the largest probability. If several classes
-tie for the maximum, all are returned.
+Class index (0 to \code{imax}) with the largest probability.
 }
 \examples{
 Ribo_mode(c(2, 1, 1))

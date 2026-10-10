@@ -8,15 +8,15 @@ Ribo_frac(Numerator, Denominator)
 }
 \arguments{
 \item{Numerator, Denominator}{Matrices with classes in rows and one
-distribution per column. Only \code{ncol(Denominator)} columns are used, so
-\code{Numerator} must have at least that many.}
+distribution per column. Only the first \code{ncol(Denominator)} columns of
+\code{Numerator} are used.}
 }
 \value{
 A numeric vector with one ratio per column.
 }
 \description{
-For each column, the sum of \code{Numerator} divided by the sum of
-\code{Denominator}, e.g. the fraction of a total that is in one state.
+For each column, \code{sum(Numerator[, i]) / sum(Denominator[, i])}; e.g.
+\code{Ribo_frac(marked, classes)} is the fraction of mRNA that is decapped.
 }
 \examples{
 Ribo_frac(matrix(1:4, 2), matrix(2:5, 2))

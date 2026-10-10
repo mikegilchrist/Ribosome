@@ -13,34 +13,31 @@ CreateParMatrix(
 )
 }
 \arguments{
-\item{parameter.range}{A list of numeric vectors. If it has length 1 it is
-replicated (see \code{fixed}); otherwise it must have one element per entry of
-\code{par.names} (the function stops if the lengths differ). A non-list or an
-empty list stops with an error.}
+\item{parameter.range}{A list with one numeric vector per entry of
+\code{par.names}, or a list of length 1 that is replicated (see \code{fixed}).
+Anything else stops with an error.}
 
-\item{fixed}{Indices (or names) of list elements to set to \code{fixed.val}
-after replication; only used when \code{parameter.range} has length 1. If
-\code{NA} (default) the single element is simply repeated once, giving two
-columns.}
+\item{fixed}{Indices of the elements set to \code{fixed.val} after a length-1
+\code{parameter.range} is replicated to \code{num.pars} elements. If \code{NA}
+(default) the single element is repeated once, giving two columns.}
 
-\item{fixed.val}{Value assigned to the elements chosen by \code{fixed}; default 1.}
+\item{fixed.val}{Value for the elements chosen by \code{fixed}.}
 
-\item{par.names}{Character vector of column names. If given with a length-1
-\code{parameter.range}, \code{num.pars} is taken as \code{length(par.names)}. Default
-\code{NA} leaves the columns unnamed.}
+\item{par.names}{Column names; required when \code{parameter.range} has more
+than one element. With a length-1 \code{parameter.range}, its length
+overrides \code{num.pars}.}
 
-\item{num.pars}{Number of copies of a length-1 \code{parameter.range} to make
-when \code{fixed} is given and \code{par.names} is \code{NA}; default 1.}
+\item{num.pars}{Number of elements made from a length-1
+\code{parameter.range} when \code{fixed} is given.}
 }
 \value{
-A data frame with one row per combination of parameter values and
-one column per parameter, named by \code{par.names} when supplied.
+A data frame with one row per combination of values and one
+column per parameter.
 }
 \description{
-Crosses the supplied parameter values with \code{\link[=expand.grid]{expand.grid()}}, so the first
-column varies fastest. In the manuscript figures kappa is the first
-column, so each block of \code{length(kappa)} consecutive rows has one value of
-the next parameter (mu).
+Crosses the parameter values with \code{\link[=expand.grid]{expand.grid()}}, so the first column
+varies fastest. With kappa first, each block of \code{length(kappa)} rows has
+one value of the next parameter (mu).
 }
 \examples{
 CreateParMatrix(list(kappa = c(0.1, 0.2), mu = c(0.01, 0.02), lambda = 1),

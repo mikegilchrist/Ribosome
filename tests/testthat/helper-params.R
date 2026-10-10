@@ -3,8 +3,8 @@
 #  * from the repo root: Rscript -e 'testthat::test_dir("tests/testthat")'
 #    -> sources R/Polysome_functions_RAUC.R directly (no install needed);
 #  * under R CMD check / testthat::test_check("Ribosome") -> the installed
-#    package supplies the functions, and the repo-only oracle file is absent,
-#    so the one test that needs it skips (test-reference.R).
+#    package supplies the functions; the repo-only oracle file and retired/
+#    are absent, so the tests that need them skip.
 # testthat sets the working directory to tests/testthat.
 suppressPackageStartupMessages({
   library(limSolve)
@@ -17,7 +17,7 @@ suppressPackageStartupMessages({
 if (.in_repo) source(file.path(.repo, "R", "Polysome_functions_RAUC.R"), local = FALSE)
 
 # Pull only named function definitions out of a file that has side effects
-# when sourced whole (samples.R builds a 14641-row grid and runs solvers).
+# when sourced whole (retired/samples.R builds a 14641-row grid and runs solvers).
 .extract_functions <- function(file, fnames, env = globalenv()) {
   exprs <- parse(file, keep.source = FALSE)
   got <- character(0)
