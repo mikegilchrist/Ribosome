@@ -1,0 +1,35 @@
+--- a/mRNA_Populations_PLOS_GENETICS.tex
++++ b/mRNA_Populations_PLOS_GENETICS.tex
+@@ -340,7 +340,7 @@
+     \frac{dm_{0}}{dt} &= \lambda+ \tau \frac{1}{\imax}m_{1}-\left(\kappa_0 + \mu\right)m_{0} \nonumber \\
+     \frac{dm_{1}}{dt} &= \kappa_0 m_{0}+ \tau \frac{2}{\imax}m_{2}-\left( \tau \frac{1}{\imax}+\kappa_0\left(1-\frac{1}{\imax}\right)+\mu\right) m_{1}\nonumber \\
+                       & \vdots & \nonumber \\
+-    \frac{dm_{i}}{dt} &= \kappa0 \left(\frac{i-1}{\imax}\right) m_{i-1}+ \tau \frac{i+1}{\imax}m_{i+1}-\left( \tau \frac{i}{\imax}+\kappa_0\left(1-\frac{i}{\imax}\right)+\mu\right) m_{i} \nonumber \\
++    \frac{dm_{i}}{dt} &= \kappa_0 \left(1-\frac{i-1}{\imax}\right) m_{i-1}+ \tau \frac{i+1}{\imax}m_{i+1}-\left( \tau \frac{i}{\imax}+\kappa_0\left(1-\frac{i}{\imax}\right)+\mu\right) m_{i} \nonumber \\
+                       & \vdots & \nonumber \\
+     \frac{dm_{\imax}}{dt} &= \kappa_0\left(1-\frac{\imax-1}{\imax}\right)m_{\imax-1}-\left( \tau +\mu\right) m_{\imax}
+   \end{align}
+@@ -353,7 +353,7 @@
+                         & \vdots & \nonumber \\
+   \frac{dm_{i}^{*}}{dt} &= \mu m_{i}+ \tau \frac{i+1}{\imax}m_{i+1}^{*}-\tau \frac{i}{\imax} m_{i}^{*} \nonumber \\
+                         & \vdots & \nonumber \\
+-  \frac{dm_{\imax}^{*}}{dt} &= \mu m_{\imax}^{*}- \tau m_{\imax}. 
++  \frac{dm_{\imax}^{*}}{dt} &= \mu m_{\imax}- \tau m_{\imax}^{*}. 
+ \end{align}
+ 
+ In closing, we note the parameters $\imax, \kappa, \mu,$ and $\tau$ likely vary between genes.
+@@ -412,11 +412,11 @@
+ \begin{align} 
+   \label{eq:decapped_abundance}
+   \mhatstar_0  &= \frac{\mu}{\delta}\sum_{j=0}^{\imax}m_{j} \nonumber \\
+-  \mhatstar_1  &= \frac{\mu}{\tau}\sum_{j=1}^{\imax}m_{j}  \nonumber \\
++  \mhatstar_1  &= \imax\frac{\mu}{\tau}\sum_{j=1}^{\imax}m_{j}  \nonumber \\
+                & \vdots &  \\
+-  \mhatstar_i  &= \frac{1}{i}\frac{\mu}{\tau}\sum_{j=i}^{\imax}m_{j}  \nonumber \\
++  \mhatstar_i  &= \frac{\imax}{i}\frac{\mu}{\tau}\sum_{j=i}^{\imax}m_{j}  \nonumber \\
+                & \vdots & \nonumber \\
+-  \mhatstar_{\imax}  &= \frac{1}{\imax}\frac{\mu}{\tau} \mvechat_{\imax}   \nonumber
++  \mhatstar_{\imax}  &= \frac{\mu}{\tau} \mvechat_{\imax}   \nonumber
+ \end{align}
+ 
+ We can simplify the model by converting the mRNA quantity $m_{j}$ to the probability $p_{j}$ by Eq (\ref{eq:capped_solution}).
