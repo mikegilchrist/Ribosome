@@ -1,0 +1,18 @@
+diff --git a/R/Polysome_functions_RAUC.R b/R/Polysome_functions_RAUC.R
+index c25f73f..4e582b7 100644
+--- a/R/Polysome_functions_RAUC.R
++++ b/R/Polysome_functions_RAUC.R
+@@ -390,10 +390,10 @@ Check_dir <- function(dir,new.dir=NA,add=F){
+     return("Directory already exists")
+   }else if(add==T) {
+     dir.create(paste(dir,as.character(new.dir),sep="/"))
+-    return(paste("Directory ",dir,as.character(new.dir)," created",sep=""))
++    return(paste("Directory ",dir,"/",as.character(new.dir)," created",sep=""))
+   } else{
+-    return(cat(paste("Directory ",dir,as.character(new.dir)," does not exist."
+-                     ,sep=""),"Run Check_dir with new.dir=T to create this directory.",sep="\n"))
++    return(cat(paste("Directory ",dir,"/",as.character(new.dir)," does not exist."
++                     ,sep=""),"Run Check_dir with add=T to create this directory.",sep="\n"))
+   }
+ }
+ 

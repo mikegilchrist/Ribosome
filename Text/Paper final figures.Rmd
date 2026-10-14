@@ -8,6 +8,8 @@ output: html_document
 ## Load source files
 ```{r setup, include=FALSE,echo=F}
 source("../R/Polysome_functions_RAUC.R")
+library(limSolve)
+library(data.table)
 library("viridis")
 library(GenomicFeatures)
 
@@ -151,6 +153,16 @@ plot1.params <- CreateParMatrix(parameter.range = par.ranges,fixed = F,par.names
 imax.median <- 39
 plot1.params <- as.data.table(plot1.params)
 plot1.params[,"index":=1:nrow(plot1.params)]
+# Rows of plot1.params holding the k-th entry of the mu vector par.ranges[[2]]
+# (expand.grid puts kappa fastest, so each mu is one contiguous block). Selected
+# by position, not by value, because yeast entries 3 and 4 are identical. The
+# stopifnot guards against the grid layout changing under hard-coded positions.
+mu_block_rows <- function(k) {
+  n <- length(par.ranges[[1]])
+  rows <- ((k - 1) * n + 1):(k * n)
+  stopifnot(all(plot1.params[rows, mu] == par.ranges[[2]][k]))
+  rows
+}
 #calculate unmarked class
 Unmarked_imax_median_plot1_int <- apply(plot1.params,1,function(i) CalcUnmarkedClass(parameters = i,imax = imax.median,rescale = T,rescale.val = "tau",par.names = par.names,interference = T,which.interfere = c("kappa","tau")))
 
@@ -903,16 +915,16 @@ Prot_prod_norm <- lapply(Prot_prod,function(i) i/max(unlist(Prot_prod)))
 
 
 png("protein_production.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(1:5000,Prot_prod_norm[[5]][c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,xlim=c(0,50000),ylim=c(0,1))
-lines(5001:10000,Prot_prod_norm[[5]][c(40001:45000)],lwd=2)
-lines(10001:15000,Prot_prod_norm[[5]][c(35001:40000)],lwd=2)
-lines(15001:20000,Prot_prod_norm[[5]][c(30001:35000)],lwd=2)
-lines(20001:25000,Prot_prod_norm[[5]][c(25001:30000)],lwd=2)
-lines(25001:30000,Prot_prod_norm[[5]][c(20001:25000)],lwd=2)
-lines(30001:35000,Prot_prod_norm[[5]][c(15001:20000)],lwd=2)
-lines(35001:40000,Prot_prod_norm[[5]][c(10001:15000)],lwd=2)
-lines(40001:45000,Prot_prod_norm[[5]][c(5001:10000)],lwd=2)
-lines(45001:50000,Prot_prod_norm[[5]][c(1:5000)],lwd=2)
+plot(1:5000,Prot_prod_norm[[5]][mu_block_rows(10)],type="l",axes=F,xlab="",ylab="",lwd=2,xlim=c(0,50000),ylim=c(0,1))  # block 10: mu 0.000222, half-life 52 min
+lines(5001:10000,Prot_prod_norm[[5]][mu_block_rows(9)],lwd=2)  # block 9: mu 0.00033, half-life 35 min
+lines(10001:15000,Prot_prod_norm[[5]][mu_block_rows(8)],lwd=2)  # block 8: mu 0.000444, half-life 26 min
+lines(15001:20000,Prot_prod_norm[[5]][mu_block_rows(7)],lwd=2)  # block 7: mu 0.000825, half-life 14 min
+lines(20001:25000,Prot_prod_norm[[5]][mu_block_rows(6)],lwd=2)  # block 6: mu 0.00165, half-life 7 min
+lines(25001:30000,Prot_prod_norm[[5]][mu_block_rows(5)],lwd=2)  # block 5: mu 0.00231, half-life 5 min
+lines(30001:35000,Prot_prod_norm[[5]][mu_block_rows(4)],lwd=2)  # block 4: mu 0.00385, half-life 3 min
+lines(35001:40000,Prot_prod_norm[[5]][mu_block_rows(3)],lwd=2)  # block 3: mu 0.00385, half-life 3 min
+lines(40001:45000,Prot_prod_norm[[5]][mu_block_rows(2)],lwd=2)  # block 2: mu 0.00578, half-life 2 min
+lines(45001:50000,Prot_prod_norm[[5]][mu_block_rows(1)],lwd=2)  # block 1: mu 0.01, half-life 1 min
 axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod_norm[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
 axis(2,at = seq(0,1,0.2),labels = seq(0,1,0.2),las=1)
 abline(v=seq(0,50000,5000),lty=2,col="grey50")
@@ -923,10 +935,10 @@ dev.off()
 
 
 png("protein_production_stacked.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(par.ranges[[1]],Prot_prod_norm[[5]][c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
-lines(par.ranges[[1]],Prot_prod_norm[[5]][c(40001:45000)],lwd=2,lty=2)
-lines(par.ranges[[1]],Prot_prod_norm[[5]][c(20001:25000)],lwd=2,lty=3)
-lines(par.ranges[[1]],Prot_prod_norm[[5]][c(1:5000)],lwd=2,lty=4)
+plot(par.ranges[[1]],Prot_prod_norm[[5]][mu_block_rows(10)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))  # block 10: mu 0.000222, half-life 52 min
+lines(par.ranges[[1]],Prot_prod_norm[[5]][mu_block_rows(9)],lwd=2,lty=2)  # block 9: mu 0.00033, half-life 35 min
+lines(par.ranges[[1]],Prot_prod_norm[[5]][mu_block_rows(5)],lwd=2,lty=3)  # block 5: mu 0.00231, half-life 5 min
+lines(par.ranges[[1]],Prot_prod_norm[[5]][mu_block_rows(1)],lwd=2,lty=4)  # block 1: mu 0.01, half-life 1 min
 
 #axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
 axis(1,at = c(0.0001,0.001,0.01,0.1,0.5),labels =c(0.0001,0.001,0.01,0.1,0.5) )
@@ -957,10 +969,10 @@ dev.off()
 # dev.off()
 
 png("protein_production_stacked_log.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))
-lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(40001:45000)],lwd=2,lty=2)
-lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(20001:25000)],lwd=2,lty=3)
-lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][c(1:5000)],lwd=2,lty=4)
+plot(log(par.ranges[[1]],10),Prot_prod_norm[[5]][mu_block_rows(10)],type="l",axes=F,xlab="",ylab="",lwd=2,ylim=c(0,1))  # block 10: mu 0.000222, half-life 52 min
+lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][mu_block_rows(9)],lwd=2,lty=2)  # block 9: mu 0.00033, half-life 35 min
+lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][mu_block_rows(5)],lwd=2,lty=3)  # block 5: mu 0.00231, half-life 5 min
+lines(log(par.ranges[[1]],10),Prot_prod_norm[[5]][mu_block_rows(1)],lwd=2,lty=4)  # block 1: mu 0.01, half-life 1 min
 
 #axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
 axis(1,at = c(-4,-3,-2,-1),labels =c(-4,-3,-2,-1) )
@@ -983,11 +995,11 @@ Prot_prod_M_norm <- Prot_prod_M/max(Prot_prod)
 Prot_prod_norm <- Prot_prod/max(Prot_prod)
 
 png("protein_production_stacked_log_correct.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(log(par.ranges[[1]],10),Prot_prod_norm[c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
+plot(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(10)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))  # block 10: mu 0.000222, half-life 52 min
 #lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(45001:50000)],lwd=2,lty=2,col="red")
 #lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(45001:50000)],lwd=2,lty=2,col="blue")
- lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=3,lty=2)
- lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=3,lty=3)
+ lines(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(9)],lwd=3,lty=2)  # block 9: mu 0.00033, half-life 35 min
+ lines(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(5)],lwd=3,lty=3)  # block 5: mu 0.00231, half-life 5 min
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
 
 #axis(1,at = seq(0.05,0.95,0.1)*length(Prot_prod[[5]]),labels = rev(round(log(par.ranges[[2]],10),2)),las=2)
@@ -1004,9 +1016,9 @@ dev.off()
 
 
 png("protein_production_stacked_log_correc_low_marking.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(log(par.ranges[[1]],10),Prot_prod_norm[c(45001:50000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
-lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(45001:50000)],lwd=3,lty=1,col="grey50")
-lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(45001:50000)],lwd=3,lty=2,col="grey")
+plot(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(10)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))  # block 10: mu 0.000222, half-life 52 min
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[mu_block_rows(10)],lwd=3,lty=1,col="grey50")  # block 10: mu 0.000222, half-life 52 min
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[mu_block_rows(10)],lwd=3,lty=2,col="grey")  # block 10: mu 0.000222, half-life 52 min
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
@@ -1024,9 +1036,9 @@ dev.off()
 
 
 png("protein_production_stacked_log_correct_mid_marking.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
-lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(40001:45000)],lwd=3,lty=1,col="grey50")
-lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(40001:45000)],lwd=3,lty=2,col="grey")
+plot(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(9)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))  # block 9: mu 0.00033, half-life 35 min
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[mu_block_rows(9)],lwd=3,lty=1,col="grey50")  # block 9: mu 0.00033, half-life 35 min
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[mu_block_rows(9)],lwd=3,lty=2,col="grey")  # block 9: mu 0.00033, half-life 35 min
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
@@ -1043,9 +1055,9 @@ box()
 dev.off()
 
 png("protein_production_stacked_log_correct_high_marking.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))
-lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(20001:25000)],lwd=3,lty=1,col="grey50")
-lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(20001:25000)],lwd=3,lty=2,col="grey")
+plot(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(5)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,1))  # block 5: mu 0.00231, half-life 5 min
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[mu_block_rows(5)],lwd=3,lty=1,col="grey50")  # block 5: mu 0.00231, half-life 5 min
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[mu_block_rows(5)],lwd=3,lty=2,col="grey")  # block 5: mu 0.00231, half-life 5 min
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
@@ -1062,9 +1074,9 @@ box()
 dev.off()
 
 png("protein_production_stacked_log_correct_high_marking_zoom.png",width = 6,height = 6,units = "in",res = 300,bg = rgb(0,0,0,0))
-plot(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,0.2))
-lines(log(par.ranges[[1]],10),Prot_prod_U_norm[c(20001:25000)],lwd=3,lty=1,col="grey50")
-lines(log(par.ranges[[1]],10),Prot_prod_M_norm[c(20001:25000)],lwd=3,lty=2,col="grey")
+plot(log(par.ranges[[1]],10),Prot_prod_norm[mu_block_rows(5)],type="l",axes=F,xlab="",ylab="",lwd=3,ylim=c(0,0.2))  # block 5: mu 0.00231, half-life 5 min
+lines(log(par.ranges[[1]],10),Prot_prod_U_norm[mu_block_rows(5)],lwd=3,lty=1,col="grey50")  # block 5: mu 0.00231, half-life 5 min
+lines(log(par.ranges[[1]],10),Prot_prod_M_norm[mu_block_rows(5)],lwd=3,lty=2,col="grey")  # block 5: mu 0.00231, half-life 5 min
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(40001:45000)],lwd=2,lty=2)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(20001:25000)],lwd=2,lty=3)
 # lines(log(par.ranges[[1]],10),Prot_prod_norm[c(1:5000)],lwd=2,lty=4)
