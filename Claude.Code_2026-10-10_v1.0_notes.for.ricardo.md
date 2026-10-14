@@ -12,6 +12,14 @@ Apply a code patch from the repo root with `git apply <patch>`; the
 manuscript patch from the polysomeModel root. All four pass
 `git apply --check`.
 
+## 0. Suggested way to take this in
+
+This is a large change (test suite, code map, package cleanup, docs). We
+suggest that, rather than merging it into `master`, you create a `dev`
+branch on rurquidi/Ribosome and merge (or retarget the pull request) there.
+That lets you review the changes and the suggested patches below on `dev`
+before anything reaches `master`.
+
 ## 1. Notes only (no patch)
 
 1. **`rescale` does not change results.** With `rescale = TRUE`,
